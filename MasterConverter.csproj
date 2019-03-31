@@ -1,0 +1,216 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E19A66C2-B50B-4733-9A88-2AF319A29BAE}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MasterConverter</RootNamespace>
+    <AssemblyName>MasterConverter</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NET_4_6</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NET_4_6</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CommandLine, Version=2.4.3.0, Culture=neutral, PublicKeyToken=de6f01bd326f8c32, processorArchitecture=MSIL">
+      <HintPath>..\packages\CommandLineParser.2.4.3\lib\netstandard2.0\CommandLine.dll</HintPath>
+    </Reference>
+    <Reference Include="CsvHelper">
+      <HintPath>Library\CsvHelper\CsvHelper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EPPlus, Version=4.5.3.1, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
+      <HintPath>..\packages\EPPlus.4.5.3.1\lib\net40\EPPlus.dll</HintPath>
+    </Reference>
+    <Reference Include="JsonFx.Json">
+      <HintPath>Library\JsonFx\JsonFx.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.3.0\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine">
+      <HintPath>Library\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="YamlDotNet, Version=6.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
+      <HintPath>..\packages\YamlDotNet.6.0.0\lib\net45\YamlDotNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Source\Settings.cs" />
+    <Compile Include="Source\IniFile.cs" />
+    <Compile Include="Source\Constants.cs" />
+    <Compile Include="Source\RecordLoader.cs" />
+    <Compile Include="MessagePack\Attributes.cs" />
+    <Compile Include="MessagePack\FloatBits.cs" />
+    <Compile Include="MessagePack\Formatters\CollectionFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\DictionaryFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\DynamicObjectTypeFallbackFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\EnumAsStringFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\ForceSizePrimitiveFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\IgnoreFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\IMessagePackFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\MultiDimentionalArrayFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\NullableFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\OldSpecFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\PrimitiveFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\PrimitiveObjectFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\StandardClassLibraryFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\TupleFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\TypelessFormatter.cs" />
+    <Compile Include="MessagePack\Formatters\UnsafeBinaryFormatters.cs" />
+    <Compile Include="MessagePack\Formatters\ValueTupleFormatter.cs" />
+    <Compile Include="MessagePack\IFormatterResolver.cs" />
+    <Compile Include="MessagePack\IMessagePackSerializationCallbackReceiver.cs" />
+    <Compile Include="MessagePack\Internal\ArrayPool.cs" />
+    <Compile Include="MessagePack\Internal\AsymmetricKeyHashTable.cs" />
+    <Compile Include="MessagePack\Internal\AutomataDictionary.cs" />
+    <Compile Include="MessagePack\Internal\ByteArrayComparer.cs" />
+    <Compile Include="MessagePack\Internal\ByteArrayStringHashTable.cs" />
+    <Compile Include="MessagePack\Internal\DynamicAssembly.cs" />
+    <Compile Include="MessagePack\Internal\ExpressionUtility.cs" />
+    <Compile Include="MessagePack\Internal\FarmHash.cs" />
+    <Compile Include="MessagePack\Internal\GuidBits.cs" />
+    <Compile Include="MessagePack\Internal\ILGeneratorExtensions.cs" />
+    <Compile Include="MessagePack\Internal\ReflectionExtensions.cs" />
+    <Compile Include="MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs" />
+    <Compile Include="MessagePack\Internal\TinyJsonReader.cs" />
+    <Compile Include="MessagePack\Internal\UnsafeMemory.cs" />
+    <Compile Include="MessagePack\Internal\UnsafeMemory.Low.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.Helper.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.Safe.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.Safe32.Dirty.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.Safe64.Dirty.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.Unsafe.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.Unsafe32.Dirty.cs" />
+    <Compile Include="MessagePack\LZ4\Codec\LZ4Codec.Unsafe64.Dirty.cs" />
+    <Compile Include="MessagePack\LZ4\LZ4MessagePackSerializer.cs" />
+    <Compile Include="MessagePack\LZ4\LZ4MessagePackSerializer.JSON.cs" />
+    <Compile Include="MessagePack\LZ4\LZ4MessagePackSerializer.NonGeneric.cs" />
+    <Compile Include="MessagePack\MessagePackBinary.cs" />
+    <Compile Include="MessagePack\MessagePackCode.cs" />
+    <Compile Include="MessagePack\MessagePackSerializer.cs" />
+    <Compile Include="MessagePack\MessagePackSerializer.Json.cs" />
+    <Compile Include="MessagePack\MessagePackSerializer.NonGeneric.cs" />
+    <Compile Include="MessagePack\Nil.cs" />
+    <Compile Include="MessagePack\Resolvers\AttributeFormatterResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\BuiltinResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\CompositeResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\ContractlessReflectionObjectResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\DynamicEnumAsStringResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\DynamicEnumResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\DynamicGenericResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\DynamicObjectResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\DynamicUnionResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\NativeDateTimeResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\OldSpecResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\PrimitiveObjectResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\StandardResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\TypelessContractlessStandardResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\TypelessObjectResolver.cs" />
+    <Compile Include="MessagePack\Resolvers\UnsafeBinaryResolver.cs" />
+    <Compile Include="MessagePack\Shims\Reflection.cs" />
+    <Compile Include="MessagePack\StringEncoding.cs" />
+    <Compile Include="MessagePack\Unity\Formatters.cs" />
+    <Compile Include="MessagePack\Unity\UnityResolver.cs" />
+    <Compile Include="MessagePack\UnsafeExtensions\UnityBlitResolver.cs" />
+    <Compile Include="MessagePack\UnsafeExtensions\UnsafeBlitFormatter.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Source\EditXlsxBuilder.cs" />
+    <Compile Include="Source\MessagePackContractResolver.cs" />
+    <Compile Include="Source\Program.cs" />
+    <Compile Include="Source\RecordWriter.cs" />
+    <Compile Include="Source\SerializeClass.cs" />
+    <Compile Include="UnityFramework\AESExtensions.cs" />
+    <Compile Include="UnityFramework\DateTimeResolver.cs" />
+    <Compile Include="UnityFramework\DictionaryExtensions.cs" />
+    <Compile Include="UnityFramework\DirectoryUtility.cs" />
+    <Compile Include="UnityFramework\EnumerableExtensions.cs" />
+    <Compile Include="Source\ExcelUtility.cs" />
+    <Compile Include="UnityFramework\FileUtility.cs" />
+    <Compile Include="UnityFramework\PathUtility.cs" />
+    <Compile Include="UnityFramework\TypeGenerator.cs" />
+    <Compile Include="UnityFramework\TypeUtility.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.6.1 %28x86 および x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>set fname_new=$(TargetName)_merge$(TargetExt)
+if $(ConfigurationName) == Release (
+  "C:\Program Files (x86)\Microsoft\ILMerge\ILMerge" /wildcards /ndebug /out:%25fname_new%25 $(TargetFileName) *.dll /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319"
+)</PostBuildEvent>
+  </PropertyGroup>
+</Project>
