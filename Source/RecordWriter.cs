@@ -23,10 +23,8 @@ namespace MasterConverter
         {
             var filePath = Path.ChangeExtension(exportPath, Constants.MessagePackMasterFileExtension);
 
-            // To Json.
             var json = JsonFx.Json.JsonWriter.Serialize(values);
 
-            // Serialize.
             var bytes = lz4Compress ? LZ4MessagePackSerializer.FromJson(json) : MessagePackSerializer.FromJson(json);
 
             #if DEBUG
@@ -35,7 +33,6 @@ namespace MasterConverter
 
             #endif
 
-            // AES.
             if (!string.IsNullOrEmpty(aesKey))
             {
                 var aesManaged = AESExtension.CreateAesManaged(aesKey);
@@ -43,7 +40,8 @@ namespace MasterConverter
                 bytes = bytes.Encrypt(aesManaged);
             }
 
-            // File write.
+            CreateFileDirectory(filePath);
+
             using (var writer = new BinaryWriter(new FileStream(filePath, FileMode.Create)))
             {
                 writer.Write(bytes);
@@ -55,6 +53,8 @@ namespace MasterConverter
             var filePath = Path.ChangeExtension(exportPath, Constants.YamlMasterFileExtension);
 
             var serializer = new SerializerBuilder().Build();
+
+            CreateFileDirectory(filePath);
 
             using (var writer = new StreamWriter(new FileStream(filePath, FileMode.Create)))
             {
@@ -84,6 +84,15 @@ namespace MasterConverter
                     serializer.Serialize(writer, records[i]);
                 }
             }
+        }
+
+        private static void CreateFileDirectory(string filePath)
+        {
+            var directory = Path.GetDirectoryName(filePath);
+
+            if (Directory.Exists(directory)) { return; }
+            
+            Directory.CreateDirectory(directory);            
         }
     }
 }

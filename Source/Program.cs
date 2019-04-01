@@ -12,20 +12,22 @@ namespace MasterConverter
     class Program
     {
         private static Settings settings = null;
-        private static bool autoClose = false;
+        private static bool autoExit = false;
 
         class CommandLineOptions
         {
-            [Option('i', "input", Required = true, HelpText = "Convert targets directorys.", Separator = ',', Default = new string[0])]
+            [Option("input", Required = true, HelpText = "Convert targets directorys.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> Inputs { get; set; }
-            [Option('m', "mode", Required = true, HelpText = "Convert mode. (import or export or build).")]
+            [Option("mode", Required = true, HelpText = "Convert mode. (import or export or build).")]
             public string Mode { get; set; }
-            [Option('t', "tag", Required = false, HelpText = "Export target tags.", Separator = ',', Default = new string[0])]
+            [Option("tag", Required = false, HelpText = "Export target tags.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> ExportTags { get; set; }
-            [Option('y', "yaml", Required = false, HelpText = "Generate yaml file.", Default = false)]
-            public bool YamlGenerate { get; set; }
-            [Option('c', "close", Required = false, HelpText = "Auto close on finish.", Default = true)]
-            public bool AutoClose { get; set; }
+            [Option("messagepack", Required = false, HelpText = "Messagepack export directory.", Default = null)]
+            public string MessagePackDirectory { get; set; }
+            [Option("yaml", Required = false, HelpText = "Yaml export directory.", Default = null)]
+            public string YamlDirectory { get; set; }
+            [Option("exit", Required = false, HelpText = "Auto close on finish.", Default = true)]
+            public bool Exit { get; set; }
         }
 
         static void Main(string[] args)
@@ -41,7 +43,7 @@ namespace MasterConverter
             settings = new Settings();
 
             // 自動終了.
-            autoClose = options.Value.AutoClose;
+            autoExit = options.Value.Exit;
 
             // MessagePack init.
             MessagePackSerializer.SetDefaultResolver(MessagePackContractResolver.Instance);
@@ -110,7 +112,7 @@ namespace MasterConverter
                 Console.WriteLine(message);
             }
 
-            if (!autoClose)
+            if (!autoExit)
             {
                 Console.ReadLine();
             }
@@ -173,7 +175,8 @@ namespace MasterConverter
         private static void Build(string directory, Parsed<CommandLineOptions> options)
         {
             var exportTags = options.Value.ExportTags.ToArray();
-            var yamlGenerate = options.Value.YamlGenerate;
+            var messagepackDirectory = options.Value.MessagePackDirectory;
+            var yamlDirectory = options.Value.YamlDirectory;
 
             var aesKey = settings.Export.AESKey;
             var lz4compress = settings.Export.lz4compress;
@@ -197,11 +200,20 @@ namespace MasterConverter
             var instances = DeserializeRecords(serializeClass, records);
             
             // MessagePack出力.
+
+            if (!string.IsNullOrEmpty(messagepackDirectory))
+            {
+                filePath = PathUtility.Combine(messagepackDirectory, Path.GetFileName(filePath));
+            }
+
             RecordWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey);
 
             // Yaml出力.
-            if (yamlGenerate)
+
+            if (!string.IsNullOrEmpty(yamlDirectory))
             {
+                filePath = PathUtility.Combine(yamlDirectory, Path.GetFileName(filePath));
+
                 RecordWriter.ExportYaml(filePath, instances);
             }
         }
