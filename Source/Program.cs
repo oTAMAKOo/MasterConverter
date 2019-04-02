@@ -22,6 +22,8 @@ namespace MasterConverter
             public string Mode { get; set; }
             [Option("tag", Required = false, HelpText = "Export target tags.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> ExportTags { get; set; }
+            [Option("export", Required = false, HelpText = "Export file. (messagepack or yaml or both).", Default = "both")]
+            public string Export { get; set; }
             [Option("messagepack", Required = false, HelpText = "Messagepack export directory.", Default = null)]
             public string MessagePackDirectory { get; set; }
             [Option("yaml", Required = false, HelpText = "Yaml export directory.", Default = null)]
@@ -175,8 +177,14 @@ namespace MasterConverter
         private static void Build(string directory, Parsed<CommandLineOptions> options)
         {
             var exportTags = options.Value.ExportTags.ToArray();
+            var export = options.Value.Export.ToLower();
             var messagepackDirectory = options.Value.MessagePackDirectory;
             var yamlDirectory = options.Value.YamlDirectory;
+
+            if (string.IsNullOrEmpty(export))
+            {
+                throw new ArgumentException(string.Format("{0} is undefined.", nameof(export)));
+            }
 
             var aesKey = settings.Export.AESKey;
             var lz4compress = settings.Export.lz4compress;
@@ -198,21 +206,27 @@ namespace MasterConverter
             // クラス変換.
 
             var instances = DeserializeRecords(serializeClass, records);
-            
+
             // MessagePack出力.
 
-            if (!string.IsNullOrEmpty(messagepackDirectory))
+            if (export == "messagepack" || export == "both")
             {
-                filePath = PathUtility.Combine(messagepackDirectory, Path.GetFileName(filePath));
-            }
+                if (!string.IsNullOrEmpty(messagepackDirectory))
+                {
+                    filePath = PathUtility.Combine(messagepackDirectory, Path.GetFileName(filePath));
+                }
 
-            RecordWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey);
+                RecordWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey);
+            }
 
             // Yaml出力.
 
-            if (!string.IsNullOrEmpty(yamlDirectory))
+            if (export == "yaml" || export == "both")
             {
-                filePath = PathUtility.Combine(yamlDirectory, Path.GetFileName(filePath));
+                if (!string.IsNullOrEmpty(yamlDirectory))
+                {
+                    filePath = PathUtility.Combine(yamlDirectory, Path.GetFileName(filePath));
+                }
 
                 RecordWriter.ExportYaml(filePath, instances);
             }
