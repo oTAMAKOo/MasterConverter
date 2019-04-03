@@ -7,8 +7,8 @@ namespace MasterConverter
         /// <summary> クラス情報定義ファイル名 </summary>
         public const string ClassSchemaFileName = "ClassSchema.xlsx";
 
-        /// <summary> 編集用マスターファイル名 </summary>
-        public const string MasterFileName = "Master.xlsx";
+        /// <summary> 編集用マスターファイル拡張子  </summary>
+        public const string MasterFileExtension = ".xlsx";
 
         /// <summary> マスターデータシート名 </summary>
         public const string MasterSheetName = "Master";

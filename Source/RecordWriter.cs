@@ -77,6 +77,8 @@ namespace MasterConverter
 
             for (var i = 0; i < recordNames.Length; i++)
             {
+                if (string.IsNullOrEmpty(recordNames[i])) { continue; }
+
                 var filePath = PathUtility.Combine(directory, recordNames[i] + Constants.RecordFileExtension);
 
                 using (var writer = new StreamWriter(new FileStream(filePath, FileMode.Create)))

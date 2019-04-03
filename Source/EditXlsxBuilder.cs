@@ -1,10 +1,13 @@
 ﻿
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using Extensions;
 using OfficeOpenXml;
+using OfficeOpenXml.Style;
 
 namespace MasterConverter
 {
@@ -20,7 +23,11 @@ namespace MasterConverter
 
         public static void Build(string originXlsxFilePath, SerializeClass serializeClass, RecordLoader.RecordData[] records, int fieldNameRow, int recordStartRow)
         {
-            var editXlsxFilePath = PathUtility.Combine(Path.GetDirectoryName(originXlsxFilePath), Constants.MasterFileName);
+            var masterFolderName = Path.GetFileName(Path.GetDirectoryName(originXlsxFilePath));
+
+            var masterFileName = Path.ChangeExtension(masterFolderName, Constants.MasterFileExtension);
+
+            var editXlsxFilePath = PathUtility.Combine(Path.GetDirectoryName(originXlsxFilePath), masterFileName);
 
             // ファイルが存在＋ロック時はエラー.
             if (File.Exists(editXlsxFilePath))
@@ -42,6 +49,7 @@ namespace MasterConverter
             using (var excel = new ExcelPackage(editXlsxFile))
             {
                 var sheet = excel.Workbook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
+                var dimension = sheet.Dimension;
 
                 // フィールド名取得.
                 var fieldNames = ExcelUtility.GetRowValueTexts(sheet, fieldNameRow)
@@ -69,27 +77,56 @@ namespace MasterConverter
                 }
 
                 // レコード情報をセルに入力.
-                for (var i = recordStartRow; i < records.Length; i++)
+                for (var i = 0; i < records.Length; i++)
                 {
+                    var recordRow = recordStartRow + i;
+
                     foreach (var recordValue in records[i].values)
                     {
                         var fieldName = recordValue.fieldName.ToLower();
                         var column = fieldIndexDictionary.GetValueOrDefault(fieldName, -1);
-
+                        
                         if (column == -1) { continue; }
 
-                        if (sheet.Cells.End.Row < i)
+                        if (sheet.Cells.End.Row < recordRow)
                         {
-                            sheet.InsertRow(i, 1);
+                            sheet.InsertRow(recordRow, 1);
+                        }
+
+                        object value = null;
+
+                        var type = recordValue.value.GetType();
+
+                        if (type.IsArray)
+                        {
+                            var array = recordValue.value as IEnumerable;
+
+                            var valueTexts = new List<string>();
+
+                            foreach (var item in array)
+                            {
+                                valueTexts.Add(item.ToString());
+                            }
+
+                            value = string.Format("[{0}]", string.Join(",", valueTexts));
+                        }
+                        else
+                        {
+                            value = recordValue.value;
                         }
 
                         // Excelのセルは1開始なので1加算.
-                        sheet.Cells[i, column + 1].Value = recordValue.value;
-                    }
+                        sheet.Cells[recordRow, column + 1].Value = value;
+                    }                    
                 }
 
                 // セルサイズを調整.
-                sheet.Cells.AutoFitColumns();
+                sheet.Cells[dimension.Address].AutoFitColumns();
+
+                for (var i = 1; i < dimension.End.Column; i++)
+                {
+                    sheet.Column(i).Width *= 1.5f;
+                }
 
                 // 保存.
                 excel.Save();

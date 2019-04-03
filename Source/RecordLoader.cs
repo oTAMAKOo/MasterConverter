@@ -166,6 +166,8 @@ namespace MasterConverter
 
             while (name.StartsWith(newName))
             {
+                if (records.Length <= index) { break; }
+
                 var recordValue = records[index++];
 
                 if (recordValue == null) { continue; }
