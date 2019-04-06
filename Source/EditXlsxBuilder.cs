@@ -99,6 +99,7 @@ namespace MasterConverter
                         {
                             var type = recordValue.value.GetType();
 
+                            // 配列.
                             if (type.IsArray)
                             {
                                 var array = recordValue.value as IEnumerable;
@@ -110,14 +111,30 @@ namespace MasterConverter
                                     valueTexts.Add(item.ToString());
                                 }
 
-                                value = string.Format("[{0}]", string.Join(",", valueTexts));
+                                value = string.Format("[{0}]", valueTexts.Any() ? string.Join(",", valueTexts) : string.Empty);
                             }
                             else
                             {
                                 value = recordValue.value;
                             }
                         }
+                        else
+                        {
+                            var property = properties.FirstOrDefault(x => x.Key.ToLower() == fieldName);
 
+                            if (!property.Equals(default(Dictionary<string, Type>)))
+                            {
+                                // Null許容型.
+                                if (Nullable.GetUnderlyingType(property.Value) != null)
+                                {
+                                    value = "null";
+                                }
+                                else
+                                {
+                                    value = property.Value.GetDefaultValue();
+                                }
+                            }
+                        }
 
                         // Excelのセルは1開始なので1加算.
                         var cell = sheet.Cells[recordRow, column + 1];

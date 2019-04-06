@@ -42,9 +42,12 @@ namespace MasterConverter
 
             CreateFileDirectory(filePath);
 
-            using (var writer = new BinaryWriter(new FileStream(filePath, FileMode.Create)))
+            using (var file = new FileStream(filePath, FileMode.Create))
             {
-                writer.Write(bytes);
+                using (var writer = new StreamWriter(file))
+                {
+                    writer.Write(bytes);
+                }
             }
         }
 
@@ -56,9 +59,12 @@ namespace MasterConverter
 
             CreateFileDirectory(filePath);
 
-            using (var writer = new StreamWriter(new FileStream(filePath, FileMode.Create)))
+            using (var file = new FileStream(filePath, FileMode.Create))
             {
-                serializer.Serialize(writer, records);
+                using (var writer = new StreamWriter(file))
+                {
+                    serializer.Serialize(writer, records);
+                }
             }
         }
 
@@ -81,9 +87,12 @@ namespace MasterConverter
 
                 var filePath = PathUtility.Combine(directory, recordNames[i] + Constants.RecordFileExtension);
 
-                using (var writer = new StreamWriter(new FileStream(filePath, FileMode.Create)))
+                using (var file = new FileStream(filePath, FileMode.Create))
                 {
-                    serializer.Serialize(writer, records[i]);
+                    using (var writer = new StreamWriter(file))
+                    {
+                        serializer.Serialize(writer, records[i]);
+                    }
                 }
             }
         }

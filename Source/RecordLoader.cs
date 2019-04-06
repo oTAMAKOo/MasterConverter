@@ -36,6 +36,8 @@ namespace MasterConverter
         /// <summary> レコード情報読み込み(.yaml) </summary>
         public static RecordData[] LoadYamlRecords(string recordFileDirectory, TypeGenerator typeGenerator)
         {
+            if (!Directory.Exists(recordFileDirectory)) { return new RecordData[0]; }
+
             var recordFiles = Directory.EnumerateFiles(recordFileDirectory, "*.*")
                 .Where(x => Path.GetExtension(x) == Constants.RecordFileExtension);
 
@@ -43,9 +45,13 @@ namespace MasterConverter
 
             foreach (var recordFile in recordFiles)
             {
-                var str = File.ReadAllText(recordFile, Encoding.UTF8);
-
-                list.Add(str);
+                using (var file = new FileStream(recordFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (var reader = new StreamReader(file, Encoding.UTF8))
+                    {
+                        list.Add(reader.ReadToEnd());
+                    }
+                }
             }
 
             var recordList = new List<RecordData>();
@@ -90,6 +96,8 @@ namespace MasterConverter
         public static RecordData[] LoadXlsxRecords(string xlsxFilePath, int fieldNameRow, int recordStartRow)
         {
             var recordList = new List<RecordData>();
+
+            if (!File.Exists(xlsxFilePath)) { return new RecordData[0]; }
 
             using (var excel = new ExcelPackage(new FileInfo(xlsxFilePath)))
             {

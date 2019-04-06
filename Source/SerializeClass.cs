@@ -124,6 +124,14 @@ namespace MasterConverter
             if (underlyingType != null)
             {
                 valueType = underlyingType;
+
+                if (!string.IsNullOrEmpty(valueText))
+                {
+                    if (valueText.ToLower() == "null")
+                    {
+                        valueText = string.Empty;
+                    }
+                }
             }
 
             // 空文字列ならデフォルト値.
