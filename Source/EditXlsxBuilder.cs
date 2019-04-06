@@ -95,42 +95,81 @@ namespace MasterConverter
 
                         object value = null;
 
-                        var type = recordValue.value.GetType();
-
-                        if (type.IsArray)
+                        if (recordValue.value != null)
                         {
-                            var array = recordValue.value as IEnumerable;
+                            var type = recordValue.value.GetType();
 
-                            var valueTexts = new List<string>();
-
-                            foreach (var item in array)
+                            if (type.IsArray)
                             {
-                                valueTexts.Add(item.ToString());
-                            }
+                                var array = recordValue.value as IEnumerable;
 
-                            value = string.Format("[{0}]", string.Join(",", valueTexts));
+                                var valueTexts = new List<string>();
+
+                                foreach (var item in array)
+                                {
+                                    valueTexts.Add(item.ToString());
+                                }
+
+                                value = string.Format("[{0}]", string.Join(",", valueTexts));
+                            }
+                            else
+                            {
+                                value = recordValue.value;
+                            }
                         }
-                        else
-                        {
-                            value = recordValue.value;
-                        }
+
 
                         // Excelのセルは1開始なので1加算.
-                        sheet.Cells[recordRow, column + 1].Value = value;
+                        var cell = sheet.Cells[recordRow, column + 1];
+                        
+                        cell.Value = value;
                     }                    
                 }
 
                 // セルサイズを調整.
+
                 sheet.Cells[dimension.Address].AutoFitColumns();
 
-                for (var i = 1; i < dimension.End.Column; i++)
+                for (var c = 1; c < dimension.End.Column; c++)
                 {
-                    sheet.Column(i).Width *= 1.5f;
+                    sheet.Column(c).Width *= 1.5f;
+                }
+
+                for (var r = 1; r < dimension.End.Row; r++)
+                {
+                    for (var c = 1; c < dimension.End.Column; c++)
+                    {
+                        var cell = sheet.Cells[r, c];
+                        
+                        var height = MeasureTextHeight(cell.Text, cell.Style.Font, (int)sheet.Column(c).Width);
+
+                        if (sheet.Row(r).Height < height)
+                        {
+                            sheet.Row(r).Height = height;
+                        }
+
+                        cell.Style.WrapText = true;
+                        cell.Style.ShrinkToFit = true;
+                    }
                 }
 
                 // 保存.
                 excel.Save();
             }
+        }
+
+        public static double MeasureTextHeight(string text, ExcelFont font, int width)
+        {
+            if (string.IsNullOrEmpty(text)) return 0.0;
+            var bitmap = new Bitmap(1, 1);
+            var graphics = Graphics.FromImage(bitmap);
+
+            var pixelWidth = Convert.ToInt32(width * 7.5); //7.5 pixels per excel column width
+            var drawingFont = new Font(font.Name, font.Size);
+            var size = graphics.MeasureString(text, drawingFont, pixelWidth);
+
+            //72 DPI and 96 points per inch.  Excel height in points with max of 409 per Excel requirements.
+            return Math.Min(Convert.ToDouble(size.Height) * 72 / 96, 409);
         }
     }
 }
