@@ -24,6 +24,7 @@ namespace MasterConverter
         public class ExportSettings
         {
             public string AESKey = string.Empty;
+            public string AESIv = string.Empty;
             public bool lz4compress = true;
         }
 

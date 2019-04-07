@@ -26,9 +26,16 @@ namespace MasterConverter
         /// <summary> 1行取得(文字列). </summary>
         public static IEnumerable<string> GetRowValueTexts(ExcelWorksheet sheet, int row)
         {
-            var values = GetRowValues(sheet, row);
-            
-            return values.Select(x => x == null ? null : x.ToString());
+            var address = sheet.Dimension;
+
+            var values = new List<string>();
+
+            for (var i = address.Start.Column; i <= address.End.Column; i++)
+            {
+                values.Add(sheet.Cells[row, i].Text);
+            }
+
+            return values;
         }
     }
 }

@@ -106,7 +106,7 @@ namespace MasterConverter
 
                 var fieldNames = ExcelUtility.GetRowValueTexts(sheet, fieldNameRow).ToArray();
                 
-                for (var r = recordStartRow; r < address.End.Row; r++)
+                for (var r = recordStartRow; r <= address.End.Row; r++)
                 {
                     var recordValues = new List<RecordValue>();
 
@@ -140,19 +140,25 @@ namespace MasterConverter
                 }
             }
 
+            // レコード名を重複しない形式に更新.
+            recordList = UpdateRecordNames(recordList);
+
             return recordList.ToArray();
         }
         
-        private static void BuildRecordNames(RecordData[] records)
+        private static List<RecordData> UpdateRecordNames(List<RecordData> records)
         {
             while (true)
             {
                 var rename = false;
-                var groups = records.GroupBy(x => x.recordName);
+
+                var groups = records.Where(x => !string.IsNullOrEmpty(x.recordName))
+                    .GroupBy(x => x.recordName)
+                    .ToArray();
 
                 foreach (var group in groups)
                 {
-                    if (2 < group.Count())
+                    if (1 < group.Count())
                     {
                         foreach (var item in group)
                         {
@@ -163,8 +169,12 @@ namespace MasterConverter
                     }
                 }
 
+                records = groups.SelectMany(x => x).ToList();
+
                 if (!rename) { break; }
             }
+
+            return records;
         }
 
         private static string GetRecordName(string name, RecordValue[] records)

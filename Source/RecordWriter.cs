@@ -19,7 +19,7 @@ namespace MasterConverter
 
         //----- method -----
 
-        public static void ExportMessagePack(string exportPath, object[] values, bool lz4Compress, string aesKey)
+        public static void ExportMessagePack(string exportPath, object[] values, bool lz4Compress, string aesKey, string aesIv)
         {
             var filePath = Path.ChangeExtension(exportPath, Constants.MessagePackMasterFileExtension);
 
@@ -33,21 +33,18 @@ namespace MasterConverter
 
             #endif
 
-            if (!string.IsNullOrEmpty(aesKey))
+            if (!string.IsNullOrEmpty(aesKey) && !string.IsNullOrEmpty(aesIv))
             {
-                var aesManaged = AESExtension.CreateAesManaged(aesKey);
+                var aesManaged = AESExtension.CreateAesManaged(aesKey, aesIv);
 
                 bytes = bytes.Encrypt(aesManaged);
             }
 
             CreateFileDirectory(filePath);
 
-            using (var file = new FileStream(filePath, FileMode.Create))
+            using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
             {
-                using (var writer = new StreamWriter(file))
-                {
-                    writer.Write(bytes);
-                }
+                file.Write(bytes, 0, bytes.Length);
             }
         }
 
@@ -59,7 +56,7 @@ namespace MasterConverter
 
             CreateFileDirectory(filePath);
 
-            using (var file = new FileStream(filePath, FileMode.Create))
+            using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
             {
                 using (var writer = new StreamWriter(file))
                 {
@@ -83,11 +80,13 @@ namespace MasterConverter
 
             for (var i = 0; i < recordNames.Length; i++)
             {
-                if (string.IsNullOrEmpty(recordNames[i])) { continue; }
+                var fileName = recordNames[i].Trim();
 
-                var filePath = PathUtility.Combine(directory, recordNames[i] + Constants.RecordFileExtension);
+                if (string.IsNullOrEmpty(fileName)) { continue; }
+                
+                var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);                
 
-                using (var file = new FileStream(filePath, FileMode.Create))
+                using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
                 {
                     using (var writer = new StreamWriter(file))
                     {

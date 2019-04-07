@@ -114,10 +114,18 @@ namespace MasterConverter
                 Console.WriteLine(message);
             }
 
+            #if DEBUG
+
+            Console.ReadLine();
+
+            #else
+
             if (!autoExit)
             {
                 Console.ReadLine();
             }
+
+            #endif
 
             Environment.Exit(1);
         }
@@ -187,6 +195,7 @@ namespace MasterConverter
             }
 
             var aesKey = settings.Export.AESKey;
+            var aesIv = settings.Export.AESIv;
             var lz4compress = settings.Export.lz4compress;
 
             // 出力ファイル名.
@@ -216,7 +225,7 @@ namespace MasterConverter
                     filePath = PathUtility.Combine(messagepackDirectory, Path.GetFileName(filePath));
                 }
 
-                RecordWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey);
+                RecordWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey, aesIv);
             }
 
             // Yaml出力.

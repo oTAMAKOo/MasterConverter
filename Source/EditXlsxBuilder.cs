@@ -152,9 +152,9 @@ namespace MasterConverter
                     sheet.Column(c).Width *= 1.5f;
                 }
 
-                for (var r = 1; r < dimension.End.Row; r++)
+                for (var r = 1; r <= dimension.End.Row; r++)
                 {
-                    for (var c = 1; c < dimension.End.Column; c++)
+                    for (var c = 1; c <= dimension.End.Column; c++)
                     {
                         var cell = sheet.Cells[r, c];
                         
