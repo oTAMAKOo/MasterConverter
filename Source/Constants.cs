@@ -23,6 +23,6 @@ namespace MasterConverter
         public const string RecordsFolderName = "Records";
 
         /// <summary> レコードファイル拡張子 </summary>
-        public const string RecordFileExtension = ".yml"; // TODO: .recordに変える
+        public const string RecordFileExtension = ".record";
     }
 }
