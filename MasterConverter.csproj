@@ -62,6 +62,10 @@
     <Reference Include="EPPlus">
       <HintPath>packages\EPPlus.4.5.3.1\lib\net40\EPPlus.dll</HintPath>
     </Reference>
+    <Reference Include="INIFileParserDotNetCore, Version=2.5.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>packages\INIFileParserDotNetCore.2.5.2\lib\net40\INIFileParserDotNetCore.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="JsonFx.Json">
       <HintPath>Library\JsonFx\JsonFx.Json.dll</HintPath>
     </Reference>
