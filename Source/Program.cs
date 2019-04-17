@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -291,7 +292,7 @@ namespace MasterConverter
 
             foreach (var record in records)
             {
-                var fieldValues = record.values.ToDictionary(x => x.fieldName, x => x.value != null ? x.value.ToString() : null);
+                var fieldValues = record.values.ToDictionary(x => x.fieldName, x => ConvertValueToText(x.value));
 
                 var instance = serializeClass.CreateInstance(fieldValues);
 
@@ -299,6 +300,29 @@ namespace MasterConverter
             }
 
             return list.ToArray();
+        }
+
+        private static string ConvertValueToText(object value)
+        {
+            var valueType = value.GetType();
+
+            if (valueType.IsArray)
+            {
+                var enumerable = value as IEnumerable;
+
+                if (enumerable == null) { return null; }
+
+                var list = new List<string>();
+
+                foreach (var element in enumerable)
+                {
+                    list.Add(element.ToString());
+                }
+                
+                return string.Format("[{0}]", string.Join(",", list));
+            }
+            
+            return value.ToString();
         }
     }
 }
