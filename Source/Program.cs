@@ -304,8 +304,10 @@ namespace MasterConverter
 
         private static string ConvertValueToText(object value)
         {
-            var valueType = value.GetType();
+            if (value == null) { return string.Empty; }
 
+            var valueType = value.GetType();
+            
             if (valueType.IsArray)
             {
                 var enumerable = value as IEnumerable;
