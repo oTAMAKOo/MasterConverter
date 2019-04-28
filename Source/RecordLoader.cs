@@ -1,11 +1,13 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Extensions;
 using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using YamlDotNet.Serialization;
 
 namespace MasterConverter
@@ -34,11 +36,11 @@ namespace MasterConverter
         //----- method -----
 
         /// <summary> レコード情報読み込み(.yaml) </summary>
-        public static RecordData[] LoadYamlRecords(string recordFileDirectory, TypeGenerator typeGenerator)
+        public static RecordData[] LoadYamlRecords(string yamlDirectory, TypeGenerator typeGenerator)
         {
-            if (!Directory.Exists(recordFileDirectory)) { return new RecordData[0]; }
+            if (!Directory.Exists(yamlDirectory)) { return new RecordData[0]; }
 
-            var recordFiles = Directory.EnumerateFiles(recordFileDirectory, "*.*")
+            var recordFiles = Directory.EnumerateFiles(yamlDirectory, "*.*")
                 .Where(x => Path.GetExtension(x) == Constants.RecordFileExtension);
 
             var list = new List<string>();
@@ -109,7 +111,7 @@ namespace MasterConverter
                 for (var r = recordStartRow; r <= address.End.Row; r++)
                 {
                     var recordValues = new List<RecordValue>();
-
+                    
                     var records = ExcelUtility.GetRowValues(sheet, r).ToArray();
 
                     for (var c = 0; c < records.Length; c++)
@@ -145,7 +147,7 @@ namespace MasterConverter
 
             return recordList.ToArray();
         }
-        
+
         private static List<RecordData> UpdateRecordNames(List<RecordData> records)
         {
             while (true)

@@ -21,7 +21,9 @@ namespace MasterConverter
 
         //----- method -----
 
-        public static void Build(string originXlsxFilePath, SerializeClass serializeClass, RecordLoader.RecordData[] records, int fieldNameRow, int recordStartRow)
+        public static void Build(string originXlsxFilePath, SerializeClass serializeClass, 
+                                 RecordLoader.RecordData[] records, CellOptionLoader.CellOption[] cellOptions, 
+                                 int fieldNameRow, int recordStartRow)
         {
             var masterFolderName = Path.GetFileName(Path.GetDirectoryName(originXlsxFilePath));
 
@@ -56,7 +58,6 @@ namespace MasterConverter
                     .Select(x => x == null ? null : x.ToLower())
                     .ToArray();
 
-                // フィールド名のセル位置を辞書化.
                 var fieldIndexDictionary = new Dictionary<string, int>();
                 var properties = serializeClass.Class.Properties;
 
@@ -75,11 +76,13 @@ namespace MasterConverter
 
                     fieldIndexDictionary.Add(name, index.Value);
                 }
-
+                
                 // レコード情報をセルに入力.
                 for (var i = 0; i < records.Length; i++)
                 {
                     var recordRow = recordStartRow + i;
+
+                    var cellOption = cellOptions.FirstOrDefault(x => x.recordName == records[i].recordName);
 
                     foreach (var recordValue in records[i].values)
                     {
@@ -140,7 +143,15 @@ namespace MasterConverter
                         var cell = sheet.Cells[recordRow, column + 1];
                         
                         cell.Value = value;
-                    }                    
+
+                        // セルオプション情報追加.
+                        if (cellOption != null && cellOption.cellInfos != null)
+                        {
+                            var cellInfo = cellOption.cellInfos.FirstOrDefault(x => x.fieldName.ToLower() == fieldName);
+                            
+                            SetCellInfos(cell, cellInfo);
+                        }
+                    }
                 }
 
                 // セルサイズを調整.
@@ -175,7 +186,28 @@ namespace MasterConverter
             }
         }
 
-        public static double MeasureTextHeight(string text, ExcelFont font, int width)
+        private static void SetCellInfos(ExcelRange cell, CellOptionLoader.CellInfo cellInfo)
+        {
+            if (cellInfo == null) { return; }
+
+            if (!string.IsNullOrEmpty(cellInfo.author) || !string.IsNullOrEmpty(cellInfo.comment))
+            {
+                cell.AddComment(cellInfo.comment, cellInfo.author);
+            }
+
+            if (!string.IsNullOrEmpty(cellInfo.fontColor))
+            {
+                cell.Style.Font.Color.SetColor(ColorTranslator.FromHtml(cellInfo.fontColor));
+            }
+
+            if (!string.IsNullOrEmpty(cellInfo.backgroundColor))
+            {
+                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                cell.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml(cellInfo.backgroundColor));
+            }
+        }
+        
+        private static double MeasureTextHeight(string text, ExcelFont font, int width)
         {
             if (string.IsNullOrEmpty(text)) return 0.0;
             var bitmap = new Bitmap(1, 1);

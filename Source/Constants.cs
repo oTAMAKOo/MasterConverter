@@ -24,5 +24,8 @@ namespace MasterConverter
 
         /// <summary> レコードファイル拡張子 </summary>
         public const string RecordFileExtension = ".record";
+
+        /// <summary> セルオプションファイル拡張子 </summary>
+        public const string CellOptionFileExtension = ".excel";
     }
 }

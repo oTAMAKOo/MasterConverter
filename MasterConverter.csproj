@@ -99,6 +99,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Source\CellOptionLoader.cs" />
+    <Compile Include="Source\CellOptionWriter.cs" />
     <Compile Include="Source\Settings.cs" />
     <Compile Include="Source\IniFile.cs" />
     <Compile Include="Source\Constants.cs" />

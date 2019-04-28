@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Extensions;
 using MessagePack;
 using YamlDotNet.Serialization;
@@ -65,16 +66,27 @@ namespace MasterConverter
             }
         }
 
-        public static void ExportYamlRecords(string exportPath, string[] recordNames, object[] records)
+        public static void CreateCleanDirectory(string exportPath)
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
-
+           
             if (Directory.Exists(directory))
             {
                 DirectoryUtility.Delete(directory);
+
+                // ディレクトリの削除は非同期で実行される為、削除完了するまで待機する.
+                while (Directory.Exists(directory))
+                {
+                    Thread.Sleep(100);
+                }
             }
 
-            Directory.CreateDirectory(directory);
+            Directory.CreateDirectory(directory);            
+        }
+
+        public static void ExportYamlRecords(string exportPath, string[] recordNames, object[] records)
+        {
+            var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
 
             var serializer = new SerializerBuilder().Build();
 

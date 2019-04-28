@@ -135,22 +135,23 @@ namespace MasterConverter
         {
             var schemaFilePath = GetClassSchemaPath(directory);
 
-            // クラス構成読み込み.
+            var fileDirectory = GetRecordFileDirectory(directory);
 
+            // クラス構成読み込み.
             var serializeClass = LoadClassSchema(directory, null);
 
-            // レコード読み込み.
+            // レコード読み込み.            
+            var records = RecordLoader.LoadYamlRecords(fileDirectory, serializeClass.Class);
 
-            var recordFileDirectory = GetRecordFileDirectory(directory);
-
-            var records = RecordLoader.LoadYamlRecords(recordFileDirectory, serializeClass.Class);
+            // セルオプション読み込み.
+            var cellOptions = CellOptionLoader.LoadYamlCellOptions(fileDirectory);
 
             // 編集用Excelを生成 + レコード入力.
 
             var fieldNameRow = settings.Master.fieldNameRow;
             var recordStartRow = settings.Master.recordStartRow;
 
-            EditXlsxBuilder.Build(schemaFilePath, serializeClass, records, fieldNameRow, recordStartRow);
+            EditXlsxBuilder.Build(schemaFilePath, serializeClass, records, cellOptions, fieldNameRow, recordStartRow);
         }
 
         private static void Export(string directory, Parsed<CommandLineOptions> options)
@@ -161,6 +162,10 @@ namespace MasterConverter
 
             var filePath = GetEditXlsxFilePath(directory);
 
+            // 出力先ディレクトリ作成.
+
+            RecordWriter.CreateCleanDirectory(filePath);
+            
             // クラス構成読み込み.
 
             var serializeClass = LoadClassSchema(directory, exportTags);
@@ -181,6 +186,14 @@ namespace MasterConverter
             var recordNames = records.Select(x => x.recordName).ToArray();
             
             RecordWriter.ExportYamlRecords(filePath, recordNames, instances);
+
+            // セルオプション取得.
+
+            var cellOptions = CellOptionLoader.LoadXlsxRecordsCellOptions(filePath, records);
+
+            // セルオプション出力.
+
+            CellOptionWriter.ExportYamlCellOptions(filePath, cellOptions);
         }
 
         private static void Build(string directory, Parsed<CommandLineOptions> options)
