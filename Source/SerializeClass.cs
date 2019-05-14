@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Extensions;
 using OfficeOpenXml;
 
@@ -112,6 +113,31 @@ namespace MasterConverter
             }
 
             return instance;
+        }
+
+        public string GetSchemaString()
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            foreach (var property in properties)
+            {
+                if (property == null) { continue; }
+                if (!property.export) { continue; }
+                Console.WriteLine(property.fieldName);
+                if (property.type == null) { continue; }
+                
+                stringBuilder.AppendLine(property.fieldName);
+                bool IsNullable(Type type) => Nullable.GetUnderlyingType(type) != null;
+                if (IsNullable(property.type))
+                {
+                    stringBuilder.AppendLine("Nullable " + Nullable.GetUnderlyingType(property.type).FullName);
+                }
+                else
+                {
+                    stringBuilder.AppendLine(property.type.FullName);
+                }
+                stringBuilder.AppendLine();
+            }
+            return stringBuilder.ToString();
         }
 
         private object ParseValue(string valueText, Type valueType)
