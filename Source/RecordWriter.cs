@@ -1,8 +1,6 @@
 ﻿
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using Extensions;
 using MessagePack;
@@ -23,10 +21,14 @@ namespace MasterConverter
         public static void ExportMessagePack(string exportPath, object[] values, bool lz4Compress, string aesKey, string aesIv)
         {
             var filePath = Path.ChangeExtension(exportPath, Constants.MessagePackMasterFileExtension);
+            
+            var containerFormat = @"{{ ""records"": {0} }}";
 
-            var json = JsonFx.Json.JsonWriter.Serialize(values);
+            var valuesJson = JsonFx.Json.JsonWriter.Serialize(values);
 
-            var bytes = lz4Compress ? LZ4MessagePackSerializer.FromJson(json) : MessagePackSerializer.FromJson(json);
+            var messagePackJson = string.Format(containerFormat, valuesJson);
+
+            var bytes = lz4Compress ? LZ4MessagePackSerializer.FromJson(messagePackJson) : MessagePackSerializer.FromJson(messagePackJson);
 
             #if DEBUG
 
