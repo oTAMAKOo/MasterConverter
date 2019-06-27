@@ -17,9 +17,9 @@ namespace MasterConverter
 
         class CommandLineOptions
         {
-            [Option("input", Required = false, HelpText = "Convert targets directorys.", Separator = ',', Default = new string[0])]
+            [Option("input", Required = true, HelpText = "Convert targets directorys.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> Inputs { get; set; }
-            [Option("mode", Required = false, HelpText = "Convert mode. (import or export or build).")]
+            [Option("mode", Required = true, HelpText = "Convert mode. (import or export or build).")]
             public string Mode { get; set; }
             [Option("tag", Required = false, HelpText = "Export target tags.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> ExportTags { get; set; }
@@ -50,9 +50,6 @@ namespace MasterConverter
 
             // MessagePack init.
             MessagePackSerializer.SetDefaultResolver(MessagePackContractResolver.Instance);
-
-            options.Value.Inputs = new string[] { @"G:\project\Aries-Master\Masters\Character\CharacterHomePositionMaster\" };
-            options.Value.Mode = "build";
 
             foreach (var input in options.Value.Inputs)
             {
