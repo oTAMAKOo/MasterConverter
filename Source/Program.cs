@@ -253,6 +253,18 @@ namespace MasterConverter
 
                 RecordWriter.ExportYaml(filePath, instances);
             }
+            
+            // SchemaYaml出力
+            
+            if (export == "schema")
+            {
+                if (!string.IsNullOrEmpty(yamlDirectory))
+                {
+                    filePath = PathUtility.Combine(yamlDirectory, Path.GetFileName(filePath));
+                }
+                
+                SchemaWriter.ExportSchemaYaml(filePath, serializeClass);
+            }
         }
 
         // 編集用Excelファイルパス取得.
