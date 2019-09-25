@@ -58,7 +58,7 @@ namespace MasterConverter
 
             var recordList = new List<RecordData>();
             
-            var deserializer = new DeserializerBuilder().Build();
+            var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
             for (var i = 0; i < list.Count; i++)
             {
