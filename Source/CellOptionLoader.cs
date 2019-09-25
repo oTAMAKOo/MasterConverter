@@ -161,7 +161,7 @@ namespace MasterConverter
             {
                 colorCode = null;
 
-                throw new InvalidDataException(string.Format("Theme color settings not available.\n[{0}] {1}", cell.Address, cell.Text));
+                throw new NotSupportedException(string.Format("Theme color not support.\n[{0}] {1}", cell.Address, cell.Text));
             }
 
             return colorCode;
