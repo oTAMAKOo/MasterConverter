@@ -158,11 +158,27 @@ namespace MasterConverter
 
                 sheet.Cells[dimension.Address].AutoFitColumns();
 
+                // 幅.
                 for (var c = 1; c < dimension.End.Column; c++)
                 {
-                    sheet.Column(c).Width *= 1.5f;
+                    var columnWidth = sheet.Column(c).Width;
+
+                    for (var r = 1; r <= dimension.End.Row; r++)
+                    {
+                        var cell = sheet.Cells[r, c];
+
+                        var width = cell.Text.Length + 2.5f;
+
+                        if (columnWidth < width)
+                        {
+                            columnWidth = width;
+                        }
+                    }
+
+                    sheet.Column(c).Width = columnWidth;
                 }
 
+                // 高さ.
                 for (var r = 1; r <= dimension.End.Row; r++)
                 {
                     for (var c = 1; c <= dimension.End.Column; c++)
@@ -213,11 +229,10 @@ namespace MasterConverter
             var bitmap = new Bitmap(1, 1);
             var graphics = Graphics.FromImage(bitmap);
 
-            var pixelWidth = Convert.ToInt32(width * 7.5); //7.5 pixels per excel column width
+            var pixelWidth = Convert.ToInt32(width * 7.5);
             var drawingFont = new Font(font.Name, font.Size);
             var size = graphics.MeasureString(text, drawingFont, pixelWidth);
 
-            //72 DPI and 96 points per inch.  Excel height in points with max of 409 per Excel requirements.
             return Math.Min(Convert.ToDouble(size.Height) * 72 / 96, 409);
         }
     }
