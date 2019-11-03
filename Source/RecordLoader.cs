@@ -41,7 +41,9 @@ namespace MasterConverter
             if (!Directory.Exists(yamlDirectory)) { return new RecordData[0]; }
 
             var recordFiles = Directory.EnumerateFiles(yamlDirectory, "*.*")
-                .Where(x => Path.GetExtension(x) == Constants.RecordFileExtension);
+                .Where(x => Path.GetExtension(x) == Constants.RecordFileExtension)
+                .OrderBy(x => x, new NaturalComparer())
+                .ToArray();
 
             var list = new List<string>();
 

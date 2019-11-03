@@ -193,6 +193,7 @@
     <Compile Include="UnityFramework\EnumerableExtensions.cs" />
     <Compile Include="Source\ExcelUtility.cs" />
     <Compile Include="UnityFramework\FileUtility.cs" />
+    <Compile Include="UnityFramework\NaturalComparer.cs" />
     <Compile Include="UnityFramework\PathUtility.cs" />
     <Compile Include="UnityFramework\TypeGenerator.cs" />
     <Compile Include="UnityFramework\TypeUtility.cs" />
