@@ -91,6 +91,9 @@ namespace MasterConverter
                 recordList.Add(record);
             };
 
+            // レコード名を重複しない形式に更新.
+            recordList = UpdateRecordNames(recordList);
+
             return recordList.ToArray();
         }
 
