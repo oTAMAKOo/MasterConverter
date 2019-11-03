@@ -160,8 +160,8 @@ namespace MasterConverter
             if (!string.IsNullOrEmpty(color.Theme))
             {
                 colorCode = null;
-
-                throw new NotSupportedException(string.Format("Theme color not support.\n[{0}] {1}", cell.Address, cell.Text));
+                
+                Console.WriteLine("Theme color not support saved default color.\n[{0}] {1}", cell.Address, cell.Text);
             }
 
             return colorCode;
