@@ -3,7 +3,6 @@ using System;
 using MessagePack;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
-using Modules.MessagePack;
 
 namespace MasterConverter
 {
@@ -44,9 +43,6 @@ namespace MasterConverter
         {
             return new IFormatterResolver[]
             {
-                // DateTime.
-                DateTimeResolver.Instance,
-
                 // Builtin.
                 BuiltinResolver.Instance,
 

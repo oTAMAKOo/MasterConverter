@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using Extensions;
 using MessagePack;
+using MessagePack.Resolvers;
 using YamlDotNet.Serialization;
 
 namespace MasterConverter
@@ -27,12 +28,23 @@ namespace MasterConverter
             var valuesJson = JsonFx.Json.JsonWriter.Serialize(values);
 
             var messagePackJson = string.Format(containerFormat, valuesJson);
+            
+            byte[] bytes = null;
 
-            var bytes = lz4Compress ? LZ4MessagePackSerializer.FromJson(messagePackJson) : MessagePackSerializer.FromJson(messagePackJson);
+            if (lz4Compress)
+            {
+                var options = StandardResolverAllowPrivate.Options.WithCompression(MessagePackCompression.Lz4BlockArray);
+
+                bytes = MessagePackSerializer.ConvertFromJson(messagePackJson, options);
+            }
+            else
+            {
+                bytes = MessagePackSerializer.ConvertFromJson(messagePackJson);
+            }
 
             #if DEBUG
 
-            Console.WriteLine("Json(LZ4MessagePack) :\n{0}\n", LZ4MessagePackSerializer.ToJson(bytes));
+            Console.WriteLine("Json(LZ4MessagePack) :\n{0}\n", MessagePackSerializer.ConvertToJson(bytes));
 
             #endif
 

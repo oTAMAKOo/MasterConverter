@@ -48,9 +48,6 @@ namespace MasterConverter
             // 自動終了.
             autoExit = options.Value.Exit;
 
-            // MessagePack init.
-            MessagePackSerializer.SetDefaultResolver(MessagePackContractResolver.Instance);
-
             foreach (var input in options.Value.Inputs)
             {
                 var directory = string.Empty;
