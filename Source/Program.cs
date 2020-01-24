@@ -48,6 +48,10 @@ namespace MasterConverter
             // 自動終了.
             autoExit = options.Value.Exit;
 
+            // 開発用.
+            //options.Value.Inputs = new string[] { @"" };
+            //options.Value.Mode = "import";
+
             foreach (var input in options.Value.Inputs)
             {
                 var directory = string.Empty;

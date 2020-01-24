@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using Extensions;
 using OfficeOpenXml;
+using OfficeOpenXml.ConditionalFormatting;
+using OfficeOpenXml.ConditionalFormatting.Contracts;
 using OfficeOpenXml.Style;
 
 namespace MasterConverter
@@ -76,7 +78,25 @@ namespace MasterConverter
 
                     fieldIndexDictionary.Add(name, index.Value);
                 }
-                
+
+                // レコード投入用セルを用意.
+                for (var i = 0; i < records.Length; i++)
+                {
+                    var recordRow = recordStartRow + i;
+
+                    // 行追加.
+                    if (sheet.Cells.End.Row < recordRow)
+                    {
+                        sheet.InsertRow(recordRow, 1);
+                    }
+
+                    // セル情報コピー.
+                    for (var column = 1; column < dimension.End.Column; column++)
+                    {
+                        CloneCellFormat(sheet, recordStartRow, recordRow, column);
+                    }
+                }
+                 
                 // レコード情報をセルに入力.
                 for (var i = 0; i < records.Length; i++)
                 {
@@ -87,14 +107,9 @@ namespace MasterConverter
                     foreach (var recordValue in records[i].values)
                     {
                         var fieldName = recordValue.fieldName.ToLower();
-                        var column = fieldIndexDictionary.GetValueOrDefault(fieldName, -1);
+                        var fieldColumn = fieldIndexDictionary.GetValueOrDefault(fieldName, -1);
                         
-                        if (column == -1) { continue; }
-
-                        if (sheet.Cells.End.Row < recordRow)
-                        {
-                            sheet.InsertRow(recordRow, 1);
-                        }
+                        if (fieldColumn == -1) { continue; }
 
                         object value = null;
 
@@ -140,8 +155,9 @@ namespace MasterConverter
                         }
 
                         // Excelのセルは1開始なので1加算.
-                        var cell = sheet.Cells[recordRow, column + 1];
-                        
+                        var cell = sheet.Cells[recordRow, fieldColumn + 1];
+
+                        // 値設定.
                         cell.Value = value;
 
                         // セルオプション情報追加.
@@ -200,6 +216,14 @@ namespace MasterConverter
                 // 保存.
                 excel.Save();
             }
+        }
+
+        private static void CloneCellFormat(ExcelWorksheet sheet, int recordStartRow, int row, int column)
+        {
+            var srcCell = sheet.Cells[recordStartRow, column];
+            var destCell = sheet.Cells[row, column];
+
+            srcCell.Copy(destCell);
         }
 
         private static void SetCellInfos(ExcelRange cell, CellOptionLoader.CellInfo cellInfo)
