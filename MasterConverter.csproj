@@ -261,4 +261,7 @@ if $(ConfigurationName) == Release (
   "C:\Program Files (x86)\Microsoft\ILMerge\ILMerge" /wildcards /ndebug /out:%25fname_new%25 $(TargetFileName) *.dll /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319"
 )</PostBuildEvent>
   </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent />
+  </PropertyGroup>
 </Project>
