@@ -172,7 +172,7 @@ namespace MasterConverter
 
                 // セルサイズを調整.
 
-                sheet.Cells[dimension.Address].AutoFitColumns();
+                var graphics = Graphics.FromImage(new Bitmap(1, 1));
 
                 // 幅.
                 for (var c = 1; c < dimension.End.Column; c++)
@@ -183,7 +183,7 @@ namespace MasterConverter
                     {
                         var cell = sheet.Cells[r, c];
 
-                        var width = cell.Text.Length + 2.5f;
+                        var width = CalcTextWidth(graphics, cell);
 
                         if (columnWidth < width)
                         {
@@ -201,7 +201,7 @@ namespace MasterConverter
                     {
                         var cell = sheet.Cells[r, c];
                         
-                        var height = MeasureTextHeight(cell.Text, cell.Style.Font, (int)sheet.Column(c).Width);
+                        var height = CalcTextHeight(graphics, cell, (int)sheet.Column(c).Width);
 
                         if (sheet.Row(r).Height < height)
                         {
@@ -246,18 +246,33 @@ namespace MasterConverter
                 cell.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml(cellInfo.backgroundColor));
             }
         }
-        
-        private static double MeasureTextHeight(string text, ExcelFont font, int width)
+
+        private static double CalcTextWidth(Graphics graphics, ExcelRange cell)
         {
-            if (string.IsNullOrEmpty(text)) return 0.0;
-            var bitmap = new Bitmap(1, 1);
-            var graphics = Graphics.FromImage(bitmap);
+            if (string.IsNullOrEmpty(cell.Text)) { return 0.0; }
+
+            var font = cell.Style.Font;
+
+            var drawingFont = new Font(font.Name, font.Size);
+
+            var size = graphics.MeasureString(cell.Text, drawingFont);
+
+            return Convert.ToDouble(size.Width) / 5.7;
+        }
+
+        private static double CalcTextHeight(Graphics graphics, ExcelRange cell, int width)
+        {
+            if (string.IsNullOrEmpty(cell.Text)) { return 0.0; }
+
+            var font = cell.Style.Font;
 
             var pixelWidth = Convert.ToInt32(width * 7.5);
-            var drawingFont = new Font(font.Name, font.Size);
-            var size = graphics.MeasureString(text, drawingFont, pixelWidth);
 
-            return Math.Min(Convert.ToDouble(size.Height) * 72 / 96, 409);
+            var drawingFont = new Font(font.Name, font.Size);
+
+            var size = graphics.MeasureString(cell.Text, drawingFont, pixelWidth);
+
+            return Math.Min(Convert.ToDouble(size.Height) * 72 / 96 * 1.2, 409) + 2;
         }
     }
 }
