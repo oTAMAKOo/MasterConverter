@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿
+using System.IO;
+using System.Reflection;
 
 namespace MasterConverter
 {
@@ -40,7 +39,11 @@ namespace MasterConverter
 
         public Settings()
         {
-            var iniFilePath = "./settings.ini";
+            var myAssembly = Assembly.GetEntryAssembly();
+
+            var directory = Directory.GetParent(myAssembly.Location);
+
+            var iniFilePath = Path.Combine(directory.FullName, "settings.ini");
 
             Master = IniFile.Read<MasterSettings>("Master", iniFilePath);
             Export = IniFile.Read<ExportSettings>("Export", iniFilePath);
