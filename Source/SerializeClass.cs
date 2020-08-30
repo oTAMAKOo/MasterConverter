@@ -96,6 +96,8 @@ namespace MasterConverter
 
                 if (property == null) { continue; }
 
+                if (property.type == null) { continue; }
+
                 if (!property.export) { continue; }
 
                 try

@@ -7,6 +7,9 @@ namespace MasterConverter
         /// <summary> クラス情報定義ファイル名 </summary>
         public const string ClassSchemaFileName = "ClassSchema.xlsx";
 
+        /// <summary>インデックスファイル拡張子 </summary>
+        public const string IndexFileExtension = ".index";
+
         /// <summary> 編集用マスターファイル拡張子  </summary>
         public const string MasterFileExtension = ".xlsx";
 
@@ -25,7 +28,7 @@ namespace MasterConverter
         /// <summary> レコードファイル拡張子 </summary>
         public const string RecordFileExtension = ".record";
 
-        /// <summary> セルオプションファイル拡張子 </summary>
-        public const string CellOptionFileExtension = ".excel";
+        /// <summary> セル情報ファイル拡張子 </summary>
+        public const string CellOptionFileExtension = ".option";
     }
 }

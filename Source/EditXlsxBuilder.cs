@@ -23,9 +23,7 @@ namespace MasterConverter
 
         //----- method -----
 
-        public static void Build(string originXlsxFilePath, SerializeClass serializeClass, 
-                                 RecordLoader.RecordData[] records, CellOptionLoader.CellOption[] cellOptions, 
-                                 int fieldNameRow, int recordStartRow)
+        public static void Build(string originXlsxFilePath, SerializeClass serializeClass, IndexData indexData, RecordData[] records, int fieldNameRow, int recordStartRow)
         {
             var masterFolderName = Path.GetFileName(Path.GetDirectoryName(originXlsxFilePath));
 
@@ -38,7 +36,7 @@ namespace MasterConverter
             {
                 if (FileUtility.IsFileLocked(editXlsxFilePath))
                 {
-                    throw new FileLoadException(string.Format("File locked. {0}", editXlsxFilePath));
+                    throw new FileLoadException(string.Format("File locked!!\n\n{0}", editXlsxFilePath));
                 }
             }
 
@@ -52,11 +50,19 @@ namespace MasterConverter
 
             using (var excel = new ExcelPackage(editXlsxFile))
             {
-                var sheet = excel.Workbook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
-                var dimension = sheet.Dimension;
+                var worksheet = excel.Workbook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
+                var dimension = worksheet.Dimension;
+
+                // セルサイズ調整.
+                worksheet.Cells.AutoFitColumns();
+
+                // エラー無視.
+                var excelIgnoredError = worksheet.IgnoredErrors.Add(dimension);
+
+                excelIgnoredError.NumberStoredAsText = true;
 
                 // フィールド名取得.
-                var fieldNames = ExcelUtility.GetRowValueTexts(sheet, fieldNameRow)
+                var fieldNames = ExcelUtility.GetRowValueTexts(worksheet, fieldNameRow)
                     .Select(x => x == null ? null : x.ToLower())
                     .ToArray();
 
@@ -85,24 +91,38 @@ namespace MasterConverter
                     var recordRow = recordStartRow + i;
 
                     // 行追加.
-                    if (sheet.Cells.End.Row < recordRow)
+                    if (worksheet.Cells.End.Row < recordRow)
                     {
-                        sheet.InsertRow(recordRow, 1);
+                        worksheet.InsertRow(recordRow, 1);
                     }
 
                     // セル情報コピー.
                     for (var column = 1; column < dimension.End.Column; column++)
                     {
-                        CloneCellFormat(sheet, recordStartRow, recordRow, column);
+                        CloneCellFormat(worksheet, recordStartRow, recordRow, column);
                     }
                 }
-                 
+
+                // レコード順番入れ替え.
+
+                if (indexData != null && indexData.records != null)
+                {
+                    var list = new List<Tuple<int, RecordData>>();
+
+                    foreach (var record in records)
+                    {
+                        var index = indexData.records.IndexOf(x => x == record.recordName);
+
+                        list.Add(Tuple.Create(index, record));
+                    }
+
+                    records = list.OrderBy(x => x.Item1).Select(x => x.Item2).ToArray();
+                }
+
                 // レコード情報をセルに入力.
                 for (var i = 0; i < records.Length; i++)
                 {
                     var recordRow = recordStartRow + i;
-
-                    var cellOption = cellOptions.FirstOrDefault(x => x.recordName == records[i].recordName);
 
                     foreach (var recordValue in records[i].values)
                     {
@@ -155,63 +175,32 @@ namespace MasterConverter
                         }
 
                         // Excelのセルは1開始なので1加算.
-                        var cell = sheet.Cells[recordRow, fieldColumn + 1];
+                        var cell = worksheet.Cells[recordRow, fieldColumn + 1];
 
                         // 値設定.
                         cell.Value = value;
+                    }
 
-                        // セルオプション情報追加.
-                        if (cellOption != null && cellOption.cellInfos != null)
+                    // セル情報設定.
+
+                    if (records[i].cells != null)
+                    {
+                        foreach (var cellData in records[i].cells)
                         {
-                            var cellInfo = cellOption.cellInfos.FirstOrDefault(x => x.fieldName.ToLower() == fieldName);
-                            
-                            SetCellInfos(cell, cellInfo);
+                            ExcelCellUtility.Set<ExcelCell>(worksheet, recordRow, cellData.column, cellData);
                         }
                     }
                 }
-
+                
                 // セルサイズを調整.
+                
+                var celFitRange = worksheet.Cells[1, 1, dimension.End.Row, dimension.End.Column];
 
-                var graphics = Graphics.FromImage(new Bitmap(1, 1));
+                Func<int, bool> wrapTextCallback = c => { return true; };
 
-                // 幅.
-                for (var c = 1; c < dimension.End.Column; c++)
-                {
-                    var columnWidth = sheet.Column(c).Width;
+                ExcelUtility.FitColumnSize(worksheet, celFitRange, wrapTextCallback);
 
-                    for (var r = 1; r <= dimension.End.Row; r++)
-                    {
-                        var cell = sheet.Cells[r, c];
-
-                        var width = CalcTextWidth(graphics, cell);
-
-                        if (columnWidth < width)
-                        {
-                            columnWidth = width;
-                        }
-                    }
-
-                    sheet.Column(c).Width = columnWidth;
-                }
-
-                // 高さ.
-                for (var r = 1; r <= dimension.End.Row; r++)
-                {
-                    for (var c = 1; c <= dimension.End.Column; c++)
-                    {
-                        var cell = sheet.Cells[r, c];
-                        
-                        var height = CalcTextHeight(graphics, cell, (int)sheet.Column(c).Width);
-
-                        if (sheet.Row(r).Height < height)
-                        {
-                            sheet.Row(r).Height = height;
-                        }
-
-                        cell.Style.WrapText = true;
-                        cell.Style.ShrinkToFit = true;
-                    }
-                }
+                ExcelUtility.FitRowSize(worksheet, celFitRange);
 
                 // 保存.
                 excel.Save();
@@ -224,55 +213,6 @@ namespace MasterConverter
             var destCell = sheet.Cells[row, column];
 
             srcCell.Copy(destCell);
-        }
-
-        private static void SetCellInfos(ExcelRange cell, CellOptionLoader.CellInfo cellInfo)
-        {
-            if (cellInfo == null) { return; }
-
-            if (!string.IsNullOrEmpty(cellInfo.author) || !string.IsNullOrEmpty(cellInfo.comment))
-            {
-                cell.AddComment(cellInfo.comment, cellInfo.author);
-            }
-
-            if (!string.IsNullOrEmpty(cellInfo.fontColor))
-            {
-                cell.Style.Font.Color.SetColor(ColorTranslator.FromHtml(cellInfo.fontColor));
-            }
-
-            if (!string.IsNullOrEmpty(cellInfo.backgroundColor))
-            {
-                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                cell.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml(cellInfo.backgroundColor));
-            }
-        }
-
-        private static double CalcTextWidth(Graphics graphics, ExcelRange cell)
-        {
-            if (string.IsNullOrEmpty(cell.Text)) { return 0.0; }
-
-            var font = cell.Style.Font;
-
-            var drawingFont = new Font(font.Name, font.Size);
-
-            var size = graphics.MeasureString(cell.Text, drawingFont);
-
-            return Convert.ToDouble(size.Width) / 5.7;
-        }
-
-        private static double CalcTextHeight(Graphics graphics, ExcelRange cell, int width)
-        {
-            if (string.IsNullOrEmpty(cell.Text)) { return 0.0; }
-
-            var font = cell.Style.Font;
-
-            var pixelWidth = Convert.ToInt32(width * 7.5);
-
-            var drawingFont = new Font(font.Name, font.Size);
-
-            var size = graphics.MeasureString(cell.Text, drawingFont, pixelWidth);
-
-            return Math.Min(Convert.ToDouble(size.Height) * 72 / 96 * 1.2, 409) + 2;
         }
     }
 }

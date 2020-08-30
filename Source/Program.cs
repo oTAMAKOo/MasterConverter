@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CommandLine;
+using OfficeOpenXml;
 using Extensions;
-using MessagePack;
 
 namespace MasterConverter
 {
@@ -25,7 +25,7 @@ namespace MasterConverter
             public IEnumerable<string> ExportTags { get; set; }
             [Option("export", Required = false, HelpText = "Export file. (messagepack or yaml or both).", Default = "both")]
             public string Export { get; set; }
-            [Option("messagepack", Required = false, HelpText = "Messagepack export directory.", Default = null)]
+            [Option("messagepack", Required = false, HelpText = "MessagePack export directory.", Default = null)]
             public string MessagePackDirectory { get; set; }
             [Option("yaml", Required = false, HelpText = "Yaml export directory.", Default = null)]
             public string YamlDirectory { get; set; }
@@ -35,6 +35,36 @@ namespace MasterConverter
 
         static void Main(string[] args)
         {
+            /*=== 開発用 ========================================
+
+            #if DEBUG
+
+            var arguments = new List<string>();
+            
+            arguments.Add("--input");
+            arguments.Add(@"");
+
+            arguments.Add("--mode");
+            arguments.Add("export"); // import or export or build
+
+            //arguments.Add("--messagepack");
+            //arguments.Add("");
+
+            //arguments.Add("--yaml");
+            //arguments.Add("");
+
+            //arguments.Add("--tag");
+            //arguments.Add("");
+
+            //arguments.Add("--export");
+            //arguments.Add("");
+
+            args = arguments.ToArray();
+
+            #endif
+
+            //==================================================*/
+
             var options = Parser.Default.ParseArguments<CommandLineOptions>(args) as Parsed<CommandLineOptions>;
 
             if (options == null)
@@ -45,12 +75,11 @@ namespace MasterConverter
             // 設定ファイル読み込み.
             settings = new Settings();
 
+            // EPPlus License setup.
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
             // 自動終了.
             autoExit = options.Value.Exit;
-
-            // 開発用.
-            //options.Value.Inputs = new string[] { @"" };
-            //options.Value.Mode = "import";
 
             foreach (var input in options.Value.Inputs)
             {
@@ -138,21 +167,23 @@ namespace MasterConverter
 
             var fileDirectory = GetRecordFileDirectory(directory);
 
+            var excelFilePath = GetEditExcelFilePath(directory);
+
             // クラス構成読み込み.
             var serializeClass = LoadClassSchema(directory, null);
 
-            // レコード読み込み.            
-            var records = RecordLoader.LoadYamlRecords(fileDirectory, serializeClass.Class);
+            // インデックス情報読み込み.
+            var indexData = DataLoader.LoadRecordIndex(excelFilePath);
 
-            // セルオプション読み込み.
-            var cellOptions = CellOptionLoader.LoadYamlCellOptions(fileDirectory);
+            // レコード読み込み.            
+            var records = DataLoader.LoadYamlRecords(fileDirectory, serializeClass.Class);
 
             // 編集用Excelを生成 + レコード入力.
 
             var fieldNameRow = settings.Master.fieldNameRow;
             var recordStartRow = settings.Master.recordStartRow;
 
-            EditXlsxBuilder.Build(schemaFilePath, serializeClass, records, cellOptions, fieldNameRow, recordStartRow);
+            EditXlsxBuilder.Build(schemaFilePath, serializeClass, indexData, records, fieldNameRow, recordStartRow);
         }
 
         private static void Export(string directory, Parsed<CommandLineOptions> options)
@@ -161,12 +192,8 @@ namespace MasterConverter
 
             // 出力ファイル名.
 
-            var filePath = GetEditXlsxFilePath(directory);
+            var excelFilePath = GetEditExcelFilePath(directory);
 
-            // 出力先ディレクトリ作成.
-
-            RecordWriter.CreateCleanDirectory(filePath);
-            
             // クラス構成読み込み.
 
             var serializeClass = LoadClassSchema(directory, exportTags);
@@ -176,32 +203,28 @@ namespace MasterConverter
             var fieldNameRow = settings.Master.fieldNameRow;
             var recordStartRow = settings.Master.recordStartRow;
 
-            var records = RecordLoader.LoadXlsxRecords(filePath, fieldNameRow, recordStartRow).OrderBy(x => x.index).ToArray();
+            var records = DataLoader.LoadExcelRecords(excelFilePath, fieldNameRow, recordStartRow);
 
             // クラス変換.
 
             var instances = DeserializeRecords(serializeClass, records);
-
+            
             // レコード出力.
 
             var recordNames = records.Select(x => x.recordName).ToArray();
-            
-            RecordWriter.ExportYamlRecords(filePath, recordNames, instances);
 
-            // セルオプション取得.
+            DataWriter.ExportYamlRecords(excelFilePath, recordNames, instances);
 
-            var cellOptions = CellOptionLoader.LoadXlsxRecordsCellOptions(filePath, records);
+            DataWriter.ExportCellOption(excelFilePath, records);
 
-            // セルオプション出力.
-
-            CellOptionWriter.ExportYamlCellOptions(filePath, cellOptions);
+            DataWriter.ExportRecordIndex(excelFilePath, recordNames);
         }
 
         private static void Build(string directory, Parsed<CommandLineOptions> options)
         {
             var exportTags = options.Value.ExportTags.ToArray();
             var export = options.Value.Export.ToLower();
-            var messagepackDirectory = options.Value.MessagePackDirectory;
+            var messagePackDirectory = options.Value.MessagePackDirectory;
             var yamlDirectory = options.Value.YamlDirectory;
 
             if (string.IsNullOrEmpty(export))
@@ -215,7 +238,7 @@ namespace MasterConverter
 
             // 出力ファイル名.
 
-            var filePath = GetEditXlsxFilePath(directory);
+            var filePath = GetEditExcelFilePath(directory);
 
             // クラス構成読み込み.
 
@@ -225,7 +248,7 @@ namespace MasterConverter
 
             var recordFileDirectory = GetRecordFileDirectory(directory);
 
-            var records = RecordLoader.LoadYamlRecords(recordFileDirectory, serializeClass.Class);
+            var records = DataLoader.LoadYamlRecords(recordFileDirectory, serializeClass.Class);
 
             // クラス変換.
 
@@ -235,12 +258,12 @@ namespace MasterConverter
 
             if (export == "messagepack" || export == "both")
             {
-                if (!string.IsNullOrEmpty(messagepackDirectory))
+                if (!string.IsNullOrEmpty(messagePackDirectory))
                 {
-                    filePath = PathUtility.Combine(messagepackDirectory, Path.GetFileName(filePath));
+                    filePath = PathUtility.Combine(messagePackDirectory, Path.GetFileName(filePath));
                 }
 
-                RecordWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey, aesIv);
+                DataWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey, aesIv);
             }
 
             // Yaml出力.
@@ -252,16 +275,16 @@ namespace MasterConverter
                     filePath = PathUtility.Combine(yamlDirectory, Path.GetFileName(filePath));
                 }
 
-                RecordWriter.ExportYaml(filePath, instances);
+                DataWriter.ExportYaml(filePath, instances);
             }
         }
 
         // 編集用Excelファイルパス取得.
-        private static string GetEditXlsxFilePath(string directory)
+        private static string GetEditExcelFilePath(string directory)
         {
             var directoryInfo = new DirectoryInfo(directory);
 
-            var filePath = PathUtility.Combine(directory, string.Format("{0}.xlsx", directoryInfo.Name));
+            var filePath = PathUtility.Combine(directory, directoryInfo.Name + Constants.MasterFileExtension);
 
             return filePath;
         }
@@ -300,7 +323,7 @@ namespace MasterConverter
         }
 
         // レコードをクラスにデシリアライズ.
-        private static object[] DeserializeRecords(SerializeClass serializeClass, RecordLoader.RecordData[] records)
+        private static object[] DeserializeRecords(SerializeClass serializeClass, RecordData[] records)
         {
             var list = new List<object>();
 
