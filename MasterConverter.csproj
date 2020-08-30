@@ -119,6 +119,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Library\FileSystem.cs" />
+    <Compile Include="Library\UnityFramework\CRCServiceProvider.cs" />
+    <Compile Include="Library\UnityFramework\StringExtensions.cs" />
     <Compile Include="Modules\MessagePack\Scripts\MessagePack\Annotations\Attributes.cs" />
     <Compile Include="Modules\MessagePack\Scripts\MessagePack\Annotations\IMessagePackSerializationCallbackReceiver.cs" />
     <Compile Include="Modules\MessagePack\Scripts\MessagePack\BufferWriter.cs" />

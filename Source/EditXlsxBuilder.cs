@@ -196,9 +196,13 @@ namespace MasterConverter
                 
                 var celFitRange = worksheet.Cells[1, 1, dimension.End.Row, dimension.End.Column];
 
-                Func<int, bool> wrapTextCallback = c => { return true; };
+                Func<int, int, string, bool> wrapTextCallback = (r, c, text) =>
+                {
+                    // 改行が含まれている.
+                    return text.FixLineEnd().Contains("\n");
+                };
 
-                ExcelUtility.FitColumnSize(worksheet, celFitRange, wrapTextCallback);
+                ExcelUtility.FitColumnSize(worksheet, celFitRange, null, 75, wrapTextCallback);
 
                 ExcelUtility.FitRowSize(worksheet, celFitRange);
 
