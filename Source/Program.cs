@@ -81,20 +81,25 @@ namespace MasterConverter
             // 自動終了.
             autoExit = options.Value.Exit;
 
-            foreach (var input in options.Value.Inputs)
+            var targets = options.Value.Inputs.SelectMany(x => FindClassSchemaDirectories(x))
+                .Distinct()
+                .OrderBy(x => x, new NaturalComparer())
+                .ToArray();
+
+            foreach (var target in targets)
             {
                 var directory = string.Empty;
 
-                var pathType = PathUtility.GetFilePathType(input);
+                var pathType = PathUtility.GetFilePathType(target);
 
                 switch (pathType)
                 {
                     case PathUtility.FilePathType.Directory:
-                        directory = input;
+                        directory = target;
                         break;
 
                     case PathUtility.FilePathType.File:
-                        directory = Path.GetDirectoryName(input);
+                        directory = Path.GetDirectoryName(target);
                         break;
                 }
 
@@ -127,6 +132,8 @@ namespace MasterConverter
                 {
                     Exit(e.ToString());
                 }
+
+                Console.WriteLine(target);
             }
 
             #if DEBUG
@@ -159,6 +166,16 @@ namespace MasterConverter
             #endif
 
             Environment.Exit(1);
+        }
+
+        private static string[] FindClassSchemaDirectories(string directory)
+        {
+            var classSchemaExtension = Path.GetExtension(Constants.ClassSchemaFileName);
+
+            return Directory.EnumerateFiles(directory, "*" + classSchemaExtension, SearchOption.AllDirectories)
+                .Where(x => Path.GetFileName(x) == Constants.ClassSchemaFileName)
+                .Select(x => Path.GetDirectoryName(x))
+                .ToArray();
         }
 
         private static void Import(string directory, Parsed<CommandLineOptions> options)
