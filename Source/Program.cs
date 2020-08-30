@@ -81,7 +81,15 @@ namespace MasterConverter
             // 自動終了.
             autoExit = options.Value.Exit;
 
-            var targets = options.Value.Inputs.SelectMany(x => FindClassSchemaDirectories(x))
+            var inputs = options.Value.Inputs.ToArray();
+
+            Console.WriteLine("\n--------- Target Directories ---------\n");
+
+            inputs.ForEach(x => Console.WriteLine(" - {0}", x));
+
+            Console.WriteLine("\n--------- Convert Processing ---------\n");
+
+            var targets = inputs.SelectMany(x => FindClassSchemaDirectories(x))
                 .Distinct()
                 .OrderBy(x => x, new NaturalComparer())
                 .ToArray();
@@ -133,8 +141,10 @@ namespace MasterConverter
                     Exit(e.ToString());
                 }
 
-                Console.WriteLine(target);
+                Console.WriteLine(" - {0}", target);
             }
+
+            Console.WriteLine("\nConvert Finished");
 
             #if DEBUG
 
