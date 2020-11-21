@@ -42,22 +42,22 @@ namespace MasterConverter
             var arguments = new List<string>();
             
             arguments.Add("--input");
-            arguments.Add(@"");
-
+            arguments.Add(@"");             // 変換対象ディレクトリ ※ 「,」区切りで複数ディレクトリ指定可.
+            
             arguments.Add("--mode");
-            arguments.Add("export"); // import or export or build
-
-            //arguments.Add("--messagepack");
-            //arguments.Add("");
-
-            //arguments.Add("--yaml");
-            //arguments.Add("");
+            arguments.Add("export");        // 動作モード [import / export / build].
 
             //arguments.Add("--tag");
-            //arguments.Add("");
-
+            //arguments.Add("");            // 出力するタグ文字.
+            
             //arguments.Add("--export");
-            //arguments.Add("");
+            //arguments.Add("");            // 出力成果物 [messagepack / yaml / both].
+
+            //arguments.Add("--messagepack");
+            //arguments.Add("");            // MessagePack成果物出力先.
+
+            //arguments.Add("--yaml");
+            //arguments.Add("");            // Yaml成果物出力先.
 
             args = arguments.ToArray();
 
