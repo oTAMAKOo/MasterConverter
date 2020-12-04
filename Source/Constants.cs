@@ -30,5 +30,11 @@ namespace MasterConverter
 
         /// <summary> セル情報ファイル拡張子 </summary>
         public const string CellOptionFileExtension = ".option";
+
+        /// <summary> 除外フィールド先頭文字 </summary>
+        public const string IgnoreFieldPrefix = "#";
+
+        /// <summary> レコード除外フィールド名 </summary>
+        public const string IgnoreRecordFieldName = IgnoreFieldPrefix + "Ignore";
     }
 }

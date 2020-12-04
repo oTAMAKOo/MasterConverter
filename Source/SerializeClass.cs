@@ -32,7 +32,7 @@ namespace MasterConverter
         //----- method -----
 
         /// <summary> Excelからクラス情報を読み込み </summary>
-        public void LoadClassSchema(string classSchemaFilePath, string[] exportTags, int tagRow, int dataTypeRow, int fieldNameRow)
+        public void LoadClassSchema(string classSchemaFilePath, string[] exportTags, int tagRow, int dataTypeRow, int fieldNameRow, bool addIgnoreField)
         {
             if(!File.Exists(classSchemaFilePath))
             {
@@ -54,13 +54,29 @@ namespace MasterConverter
 
                 for (var i = 0; i < address.End.Column; i++)
                 {
-                    if (dataTypes[i] == null || fieldNames[i] == null) { break; }
+                    var tag = tags[i];
+
+                    var fieldName = fieldNames[i];
+
+                    if (string.IsNullOrEmpty(fieldName)){ continue; }
+
+                    var dataType = dataTypes[i];
+
+                    if (addIgnoreField)
+                    {
+                        if (fieldName.StartsWith(Constants.IgnoreFieldPrefix))
+                        {
+                            dataType = "string";
+                        }
+                    }
+                    
+                    if (string.IsNullOrEmpty(dataType)) { continue; }
 
                     var property = new Property()
                     {
-                        export = exportTags.IsEmpty() || exportTags.Contains(tags[i]),
-                        type = TypeUtility.GetTypeFromSystemTypeName(dataTypes[i]),
-                        fieldName = fieldNames[i].Trim(' ', '　', '\n', '\t'),
+                        export = exportTags.IsEmpty() || exportTags.Contains(tag),
+                        type = TypeUtility.GetTypeFromSystemTypeName(dataType),
+                        fieldName = fieldName.Trim(' ', '　', '\n', '\t'),
                     };
 
                     list.Add(property);

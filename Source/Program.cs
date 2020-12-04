@@ -36,7 +36,7 @@ namespace MasterConverter
         static void Main(string[] args)
         {
             /*=== 開発用 ========================================
-
+        
             #if DEBUG
 
             var arguments = new List<string>();
@@ -45,13 +45,13 @@ namespace MasterConverter
             arguments.Add(@"");             // 変換対象ディレクトリ ※ 「,」区切りで複数ディレクトリ指定可.
             
             arguments.Add("--mode");
-            arguments.Add("export");        // 動作モード [import / export / build].
+            arguments.Add("build");        // 動作モード [import / export / build].
 
             //arguments.Add("--tag");
             //arguments.Add("");            // 出力するタグ文字.
-            
-            //arguments.Add("--export");
-            //arguments.Add("");            // 出力成果物 [messagepack / yaml / both].
+
+            arguments.Add("--export");
+            arguments.Add("both");            // 出力成果物 [messagepack / yaml / both].
 
             //arguments.Add("--messagepack");
             //arguments.Add("");            // MessagePack成果物出力先.
@@ -197,7 +197,7 @@ namespace MasterConverter
             var excelFilePath = GetEditExcelFilePath(directory);
 
             // クラス構成読み込み.
-            var serializeClass = LoadClassSchema(directory, null);
+            var serializeClass = LoadClassSchema(directory, null, true);
 
             // インデックス情報読み込み.
             var indexData = DataLoader.LoadRecordIndex(excelFilePath);
@@ -223,7 +223,7 @@ namespace MasterConverter
 
             // クラス構成読み込み.
 
-            var serializeClass = LoadClassSchema(directory, exportTags);
+            var serializeClass = LoadClassSchema(directory, exportTags, true);
 
             // レコード取得.
 
@@ -269,13 +269,41 @@ namespace MasterConverter
 
             // クラス構成読み込み.
 
-            var serializeClass = LoadClassSchema(directory, exportTags);
+            var serializeClass = LoadClassSchema(directory, exportTags, true);
 
-            // レコード読み込み.
+            // レコード読み込み(除外フィールド含む).
 
             var recordFileDirectory = GetRecordFileDirectory(directory);
 
             var records = DataLoader.LoadYamlRecords(recordFileDirectory, serializeClass.Class);
+
+            // 除外対象のレコードを除外.
+
+            Func<RecordValue[], bool> isIgnoreRecord = recordValues =>
+            {
+                var recordValue = recordValues.FirstOrDefault(x => x.fieldName == Constants.IgnoreRecordFieldName);
+
+                if (recordValue == null){ return false; }
+
+                var value = recordValue.value as string;
+
+                return !string.IsNullOrEmpty(value);
+            };
+
+            records = records.Where(x => !isIgnoreRecord(x.values)).ToArray();
+
+            // 除外対象カラムを除外.
+
+            for (var i = 0; i < records.Length; i++)
+            {
+                var filteredValues = records[i].values.Where(y => !y.fieldName.StartsWith(Constants.IgnoreFieldPrefix)).ToArray();
+
+                records[i].values = filteredValues;
+            }
+            
+            // クラス構成再読み込み(除外フィールドなし).
+
+            serializeClass = LoadClassSchema(directory, exportTags, false);
 
             // クラス変換.
 
@@ -329,7 +357,7 @@ namespace MasterConverter
         }
 
         // クラス構成読み込み.
-        private static SerializeClass LoadClassSchema(string directory, string[] exportTags)
+        private static SerializeClass LoadClassSchema(string directory, string[] exportTags, bool addIgnoreField)
         {
             var schemaFilePath = GetClassSchemaPath(directory);
 
@@ -344,12 +372,12 @@ namespace MasterConverter
             var dataTypeRow = settings.Master.dataTypeRow;
             var fieldNameRow = settings.Master.fieldNameRow;
 
-            serializeClass.LoadClassSchema(schemaFilePath, exportTags, tagRow, dataTypeRow, fieldNameRow);
+            serializeClass.LoadClassSchema(schemaFilePath, exportTags, tagRow, dataTypeRow, fieldNameRow, addIgnoreField);
 
             return serializeClass;
         }
 
-        // レコードをクラスにデシリアライズ.
+        // レコードをクラスにデシリアライズ. 
         private static object[] DeserializeRecords(SerializeClass serializeClass, RecordData[] records)
         {
             var list = new List<object>();
