@@ -5,8 +5,6 @@ using System.Threading;
 using Extensions;
 using MessagePack;
 using MessagePack.Resolvers;
-using Newtonsoft.Json;
-using YamlDotNet.Serialization;
 
 namespace MasterConverter
 {
@@ -32,34 +30,31 @@ namespace MasterConverter
             FileSystem.WriteFile(filePath, indexData, FileSystem.Format.Yaml);
         }
 
-        public static void ExportMessagePack(string exportPath, object[] values, bool lz4Compress, string aesKey, string aesIv)
+        public static void ExportMessagePack(string exportPath, Type dataType, object[] values, bool lz4Compress, string aesKey, string aesIv)
         {
             var filePath = Path.ChangeExtension(exportPath, Constants.MessagePackMasterFileExtension);
-            
-            var containerFormat = @"{{ ""records"": {0} }}";
 
-            var valuesJson = JsonConvert.SerializeObject(values, Formatting.None);
-
-            var messagePackJson = string.Format(containerFormat, valuesJson);
-            
             byte[] bytes = null;
+
+            var options = StandardResolverAllowPrivate.Options.WithResolver(MessagePackContractResolver.Instance);
 
             if (lz4Compress)
             {
-                var options = StandardResolverAllowPrivate.Options.WithCompression(MessagePackCompression.Lz4BlockArray);
+                options = options.WithCompression(MessagePackCompression.Lz4BlockArray);
 
-                bytes = MessagePackSerializer.ConvertFromJson(messagePackJson, options);
+                bytes = MessagePackSerializer.Serialize(values, options);
             }
             else
             {
-                bytes = MessagePackSerializer.ConvertFromJson(messagePackJson);
+                bytes = MessagePackSerializer.Serialize(values, options);
             }
 
             #if DEBUG
 
-            Console.WriteLine("Json(LZ4MessagePack) :\n{0}\n", MessagePackSerializer.ConvertToJson(bytes));
+            Console.WriteLine("Json :\n{0}\n", MessagePackSerializer.ConvertToJson(bytes));
 
             #endif
+
 
             if (!string.IsNullOrEmpty(aesKey) && !string.IsNullOrEmpty(aesIv))
             {

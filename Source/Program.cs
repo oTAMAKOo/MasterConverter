@@ -51,7 +51,7 @@ namespace MasterConverter
             //arguments.Add("");            // 出力するタグ文字.
 
             arguments.Add("--export");
-            arguments.Add("both");            // 出力成果物 [messagepack / yaml / both].
+            arguments.Add("messagepack");            // 出力成果物 [messagepack / yaml / both].
 
             //arguments.Add("--messagepack");
             //arguments.Add("");            // MessagePack成果物出力先.
@@ -318,7 +318,9 @@ namespace MasterConverter
                     filePath = PathUtility.Combine(messagePackDirectory, Path.GetFileName(filePath));
                 }
 
-                DataWriter.ExportMessagePack(filePath, instances, lz4compress, aesKey, aesIv);
+                var dataType = serializeClass.Class.Type;
+
+                DataWriter.ExportMessagePack(filePath, dataType, instances, lz4compress, aesKey, aesIv);
             }
 
             // Yaml出力.
