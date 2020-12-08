@@ -42,9 +42,13 @@ namespace MasterConverter
                 options = options.WithCompression(MessagePackCompression.Lz4BlockArray);
             }
 
-            var json = JsonConvert.SerializeObject(values, Formatting.None);
+            var containerFormat = @"{{ ""records"": {0} }}";
 
-            var bytes = MessagePackSerializer.ConvertFromJson(json, options);
+            var arrayJson = JsonConvert.SerializeObject(values, Formatting.None);
+
+            var containerJson = string.Format(containerFormat, arrayJson);
+
+            var bytes = MessagePackSerializer.ConvertFromJson(containerJson, options);
 
             #if DEBUG
 
