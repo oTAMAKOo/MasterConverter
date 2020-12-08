@@ -5,6 +5,7 @@ using System.Threading;
 using Extensions;
 using MessagePack;
 using MessagePack.Resolvers;
+using Newtonsoft.Json;
 
 namespace MasterConverter
 {
@@ -34,20 +35,16 @@ namespace MasterConverter
         {
             var filePath = Path.ChangeExtension(exportPath, Constants.MessagePackMasterFileExtension);
 
-            byte[] bytes = null;
-
             var options = StandardResolverAllowPrivate.Options.WithResolver(MessagePackContractResolver.Instance);
 
             if (lz4Compress)
             {
                 options = options.WithCompression(MessagePackCompression.Lz4BlockArray);
+            }
 
-                bytes = MessagePackSerializer.Serialize(values, options);
-            }
-            else
-            {
-                bytes = MessagePackSerializer.Serialize(values, options);
-            }
+            var json = JsonConvert.SerializeObject(values, Formatting.None);
+
+            var bytes = MessagePackSerializer.ConvertFromJson(json, options);
 
             #if DEBUG
 
