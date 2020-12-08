@@ -58,6 +58,9 @@ namespace MasterConverter
                 // Object (Map Mode).
                 DynamicContractlessObjectResolver.Instance,
 
+                // Contractless.
+                ContractlessStandardResolver.Instance,
+
                 // Primitive.
                 PrimitiveObjectResolver.Instance,
             };

@@ -219,6 +219,7 @@
     <Compile Include="Modules\MessagePack\Scripts\MessagePack\Unity\MessagePackWindow.cs" />
     <Compile Include="Modules\MessagePack\Scripts\MessagePack\Unity\UnityResolver.cs" />
     <Compile Include="Modules\MessagePack\Scripts\MessagePack\Utilities.cs" />
+    <Compile Include="Source\ContainerClass.cs" />
     <Compile Include="Source\Data.cs" />
     <Compile Include="Source\Settings.cs" />
     <Compile Include="Source\IniFile.cs" />
