@@ -30,9 +30,28 @@ namespace MasterConverter
             FileSystem.WriteFile(filePath, indexData, FileSystem.Format.Yaml);
         }
 
+        private static string GetExportPath(string filePath, string extension)
+        {
+            const string MasterSuffix = "Master";
+
+            var exportPath = string.Empty;
+
+            var directory = Path.GetDirectoryName(filePath);
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            if (fileName.EndsWith(MasterSuffix))
+            {
+                fileName = fileName.SafeSubstring(0, fileName.Length - MasterSuffix.Length);
+            }
+
+            exportPath = PathUtility.Combine(directory, fileName) + extension;
+
+            return exportPath;
+        }
+
         public static void ExportMessagePack(string exportPath, Type dataType, object[] values, bool lz4Compress, string aesKey, string aesIv)
         {
-            var filePath = Path.ChangeExtension(exportPath, Constants.MessagePackMasterFileExtension);
+            var filePath = GetExportPath(exportPath, Constants.MessagePackMasterFileExtension);
 
             //----- データ格納用のコンテナクラス作成 -----
 
@@ -81,8 +100,8 @@ namespace MasterConverter
 
         public static void ExportYaml(string exportPath, object[] records)
         {
-            var filePath = Path.ChangeExtension(exportPath, Constants.YamlMasterFileExtension);
-
+            var filePath = GetExportPath(exportPath, Constants.YamlMasterFileExtension);
+            
             CreateFileDirectory(filePath);
 
             FileSystem.WriteFile(filePath, records, FileSystem.Format.Yaml);
