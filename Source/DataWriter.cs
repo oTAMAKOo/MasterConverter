@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Threading;
 using Extensions;
 using MessagePack;
@@ -49,7 +50,7 @@ namespace MasterConverter
             return exportPath;
         }
 
-        public static void ExportMessagePack(string exportPath, Type dataType, object[] values, bool lz4Compress, string aesKey, string aesIv)
+        public static void ExportMessagePack(string exportPath, Type dataType, object[] values, bool lz4Compress, AesManaged dataEncryptor, AesManaged fileNameEncryptor)
         {
             var filePath = GetExportPath(exportPath, Constants.MessagePackMasterFileExtension);
 
@@ -82,12 +83,19 @@ namespace MasterConverter
 
             #endif
 
-
-            if (!string.IsNullOrEmpty(aesKey) && !string.IsNullOrEmpty(aesIv))
+            if (dataEncryptor != null)
             {
-                var aesManaged = AESExtension.CreateAesManaged(aesKey, aesIv);
+                bytes = bytes.Encrypt(dataEncryptor);
+            }
 
-                bytes = bytes.Encrypt(aesManaged);
+            if (fileNameEncryptor != null)
+            {
+                var directory = Path.GetDirectoryName(filePath);
+                var fileName = Path.GetFileName(filePath);
+
+                fileName = fileName.Encrypt(fileNameEncryptor);
+
+                filePath = PathUtility.Combine(directory, fileName);
             }
 
             CreateFileDirectory(filePath);

@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace MasterConverter
 {
-    public class Settings
+    public sealed class Settings
     {
         //----- params -----
         
@@ -27,6 +27,12 @@ namespace MasterConverter
             public bool lz4compress = true;
         }
 
+        public class FileSettings
+        {
+            public string MessagepackAESKey = string.Empty;
+            public string MessagepackAESIv = string.Empty;
+        }
+
         //----- field -----
 
         //----- property -----
@@ -34,6 +40,8 @@ namespace MasterConverter
         public MasterSettings Master { get; private set; }
 
         public ExportSettings Export { get; private set; }
+
+        public FileSettings File { get; private set; }
 
         //----- method -----        
 
@@ -47,6 +55,7 @@ namespace MasterConverter
 
             Master = IniFile.Read<MasterSettings>("Master", iniFilePath);
             Export = IniFile.Read<ExportSettings>("Export", iniFilePath);
+            File = IniFile.Read<FileSettings>("File", iniFilePath);
         }
     }
 }

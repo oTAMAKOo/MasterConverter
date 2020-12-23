@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using CommandLine;
 using OfficeOpenXml;
 using Extensions;
@@ -259,9 +260,16 @@ namespace MasterConverter
                 throw new ArgumentException(string.Format("{0} is undefined.", nameof(export)));
             }
 
-            var aesKey = settings.Export.AESKey;
-            var aesIv = settings.Export.AESIv;
             var lz4compress = settings.Export.lz4compress;
+
+            // DataEncryptor.
+
+            AesManaged dataEncryptor = null;
+            
+            if (!string.IsNullOrEmpty(settings.Export.AESKey) && !string.IsNullOrEmpty(settings.Export.AESIv))
+            {
+                dataEncryptor = AESExtension.CreateAesManaged(settings.Export.AESKey, settings.Export.AESIv);
+            }
 
             // 出力ファイル名.
 
@@ -318,9 +326,16 @@ namespace MasterConverter
                     filePath = PathUtility.Combine(messagePackDirectory, Path.GetFileName(filePath));
                 }
 
+                AesManaged fileNameEncryptor = null;
+
+                if (!string.IsNullOrEmpty(settings.File.MessagepackAESKey) && !string.IsNullOrEmpty(settings.File.MessagepackAESIv))
+                {
+                    fileNameEncryptor = AESExtension.CreateAesManaged(settings.File.MessagepackAESKey, settings.File.MessagepackAESIv);
+                }
+
                 var dataType = serializeClass.Class.Type;
 
-                DataWriter.ExportMessagePack(filePath, dataType, instances, lz4compress, aesKey, aesIv);
+                DataWriter.ExportMessagePack(filePath, dataType, instances, lz4compress, dataEncryptor, fileNameEncryptor);
             }
 
             // Yaml出力.
@@ -331,7 +346,7 @@ namespace MasterConverter
                 {
                     filePath = PathUtility.Combine(yamlDirectory, Path.GetFileName(filePath));
                 }
-
+                
                 DataWriter.ExportYaml(filePath, instances);
             }
         }
