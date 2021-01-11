@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Extensions;
 using OfficeOpenXml;
 
@@ -122,9 +123,15 @@ namespace MasterConverter
 
                     TypeGenerator.SetProperty(instance, property.fieldName, value, property.type);
                 }
-                catch
+                catch (Exception e)
                 {
-                    Console.WriteLine(string.Format("CsvRecord error. [ERROR] ({0}){1} = {2}\n", property.type.Name, property.fieldName, item.Value));
+                    var builder = new StringBuilder();
+                    
+                    builder.AppendFormat("[ERROR] : {0}", e.Message).AppendLine();
+                    builder.AppendFormat("({0}){1} = {2}", property.type.Name, property.fieldName, item.Value).AppendLine();
+                    builder.AppendLine();
+
+                    Console.WriteLine("CsvRecord error. \n[ERROR]\n[ERROR] ({0}){1} = {2}\n\n{3}", property.type.Name, property.fieldName, item.Value, e.Message);
                     throw;
                 }
             }
