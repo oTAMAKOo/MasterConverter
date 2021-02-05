@@ -131,7 +131,8 @@ namespace MasterConverter
                     builder.AppendFormat("({0}){1} = {2}", property.type.Name, property.fieldName, item.Value).AppendLine();
                     builder.AppendLine();
 
-                    Console.WriteLine("CsvRecord error. \n[ERROR]\n[ERROR] ({0}){1} = {2}\n\n{3}", property.type.Name, property.fieldName, item.Value, e.Message);
+                    Console.WriteLine(builder.ToString());
+
                     throw;
                 }
             }
