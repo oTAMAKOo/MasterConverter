@@ -4,7 +4,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
-using MessagePack;
 
 namespace Extensions
 {
@@ -80,17 +79,17 @@ namespace Extensions
             var propAttr = MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig;
 
             // プロパティを作成.
-            foreach (var Propertie in properties)
+            foreach (var property in properties)
             {
                 // プライベートフィールドの作成.
-                var nameFieldBuilder = typeBuilder.DefineField(Propertie.Key + "_", Propertie.Value, FieldAttributes.Private);
+                var nameFieldBuilder = typeBuilder.DefineField(property.Key + "_", property.Value, FieldAttributes.Private);
 
                 // パブリックプロパティ.
-                var namePropertyBuilder = typeBuilder.DefineProperty(Propertie.Key, PropertyAttributes.HasDefault, Propertie.Value, null);
+                var namePropertyBuilder = typeBuilder.DefineProperty(property.Key, PropertyAttributes.HasDefault, property.Value, null);
 
                 //------ Getterメソッドの作成 ------
 
-                MethodBuilder getNameMethod = typeBuilder.DefineMethod("get_" + Propertie.Key, propAttr, Propertie.Value, Type.EmptyTypes);
+                MethodBuilder getNameMethod = typeBuilder.DefineMethod("get_" + property.Key, propAttr, property.Value, Type.EmptyTypes);
                 ILGenerator getNamePropIL = getNameMethod.GetILGenerator();
                 getNamePropIL.Emit(OpCodes.Ldarg_0);
                 getNamePropIL.Emit(OpCodes.Ldfld, nameFieldBuilder);
@@ -100,7 +99,7 @@ namespace Extensions
 
                 //------ Setterメソッドの作成 ------
 
-                var setNameMethod = typeBuilder.DefineMethod("set_" + Propertie.Key, propAttr, null, new Type[] { Propertie.Value });
+                var setNameMethod = typeBuilder.DefineMethod("set_" + property.Key, propAttr, null, new Type[] { property.Value });
                 ILGenerator setNamePropIL = setNameMethod.GetILGenerator();
                 setNamePropIL.Emit(OpCodes.Ldarg_0);
                 setNamePropIL.Emit(OpCodes.Ldarg_1);

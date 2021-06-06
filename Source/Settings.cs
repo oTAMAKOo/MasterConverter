@@ -20,28 +20,11 @@ namespace MasterConverter
             public int recordStartRow = 5;
         }
 
-        public class ExportSettings
-        {
-            public string AESKey = string.Empty;
-            public string AESIv = string.Empty;
-            public bool lz4compress = true;
-        }
-
-        public class FileSettings
-        {
-            public string MessagepackAESKey = string.Empty;
-            public string MessagepackAESIv = string.Empty;
-        }
-
         //----- field -----
 
         //----- property -----
 
         public MasterSettings Master { get; private set; }
-
-        public ExportSettings Export { get; private set; }
-
-        public FileSettings File { get; private set; }
 
         //----- method -----        
 
@@ -54,8 +37,6 @@ namespace MasterConverter
             var iniFilePath = Path.Combine(directory.FullName, "settings.ini");
 
             Master = IniFile.Read<MasterSettings>("Master", iniFilePath);
-            Export = IniFile.Read<ExportSettings>("Export", iniFilePath);
-            File = IniFile.Read<FileSettings>("File", iniFilePath);
         }
     }
 }

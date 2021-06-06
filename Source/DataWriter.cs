@@ -1,11 +1,10 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using Extensions;
-using MessagePack;
-using MessagePack.Resolvers;
 
 namespace MasterConverter
 {
@@ -14,7 +13,7 @@ namespace MasterConverter
         //----- params -----
 
         //----- field -----
-
+        
         //----- property -----
 
         //----- method -----
@@ -50,71 +49,6 @@ namespace MasterConverter
             return exportPath;
         }
 
-        public static void ExportMessagePack(string exportPath, Type dataType, object[] values, bool lz4Compress, AesCryptoKey dataCryptoKey, AesCryptoKey fileNameCryptoKey)
-        {
-            var filePath = GetExportPath(exportPath, Constants.MessagePackMasterFileExtension);
-
-            //----- データ格納用のコンテナクラス作成 -----
-
-            var containerClassType = typeof(ContainerClass<>);
-
-            var containerType = containerClassType.MakeGenericType(dataType);
-
-            var containerInstance = Activator.CreateInstance(containerType);
-
-            var container = containerInstance as IContainerClass;
-
-            container.SetRecords(values);
-
-            //----- MessagePackのバイナリデータ出力 -----
-
-            var options = StandardResolverAllowPrivate.Options.WithResolver(MessagePackContractResolver.Instance);
-
-            if (lz4Compress)
-            {
-                options = options.WithCompression(MessagePackCompression.Lz4BlockArray);
-            }
-
-            var bytes = MessagePackSerializer.Serialize(containerInstance, options);
-
-            #if DEBUG
-
-            Console.WriteLine("Json :\n{0}\n", MessagePackSerializer.ConvertToJson(bytes));
-
-            #endif
-
-            if (dataCryptoKey != null)
-            {
-                bytes = bytes.Encrypt(dataCryptoKey);
-            }
-
-            if (fileNameCryptoKey != null)
-            {
-                var directory = Path.GetDirectoryName(filePath);
-                var fileName = Path.GetFileName(filePath);
-
-                fileName = fileName.Encrypt(fileNameCryptoKey, true);
-
-                filePath = PathUtility.Combine(directory, fileName);
-            }
-
-            CreateFileDirectory(filePath);
-
-            using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
-            {
-                file.Write(bytes, 0, bytes.Length);
-            }
-        }
-
-        public static void ExportYaml(string exportPath, object[] records)
-        {
-            var filePath = GetExportPath(exportPath, Constants.YamlMasterFileExtension);
-            
-            CreateFileDirectory(filePath);
-
-            FileSystem.WriteFile(filePath, records, FileSystem.Format.Yaml);
-        }
-
         public static void CreateCleanDirectory(string exportPath)
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
@@ -133,27 +67,40 @@ namespace MasterConverter
             Directory.CreateDirectory(directory);            
         }
 
-        public static void ExportYamlRecords(string exportPath, string[] recordNames, object[] records)
+        public static async Task ExportYamlRecords(string exportPath, string[] recordNames, object[] records)
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
 
             CreateCleanDirectory(directory);
+
+            var tasks = new List<Task>();
 
             for (var i = 0; i < recordNames.Length; i++)
             {
                 var fileName = recordNames[i].Trim();
 
                 if (string.IsNullOrEmpty(fileName)) { continue; }
-                
-                var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);                
-                
-                FileSystem.WriteFile(filePath, records[i], FileSystem.Format.Yaml);
+
+                var index = i;
+
+                var task = Task.Run(() =>
+                {
+                    var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);
+
+                    FileSystem.WriteFile(filePath, records[index], FileSystem.Format.Yaml);
+                });
+
+                tasks.Add(task);
             }
+
+            await Task.WhenAll(tasks);
         }
 
-        public static void ExportCellOption(string exportPath, RecordData[] records)
+        public static async Task ExportCellOption(string exportPath, RecordData[] records)
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
+
+            var tasks = new List<Task>();
 
             foreach (var record in records)
             {
@@ -161,10 +108,17 @@ namespace MasterConverter
 
                 if (record.cells.IsEmpty()){ continue; }
 
-                var filePath = PathUtility.Combine(directory, record.recordName + Constants.CellOptionFileExtension);
+                var task = Task.Run(() =>
+                {
+                    var filePath = PathUtility.Combine(directory, record.recordName + Constants.CellOptionFileExtension);
 
-                FileSystem.WriteFile(filePath, record.cells, FileSystem.Format.Yaml);
+                    FileSystem.WriteFile(filePath, record.cells, FileSystem.Format.Yaml);
+                });
+
+                tasks.Add(task);
             }
+
+            await Task.WhenAll(tasks);
         }
 
         private static void CreateFileDirectory(string filePath)

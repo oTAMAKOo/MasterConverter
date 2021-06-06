@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Extensions;
 using OfficeOpenXml;
 
@@ -25,7 +26,7 @@ namespace MasterConverter
 
         // プロパティ情報.
         private Property[] properties = null;
-
+        
         //----- property -----
 
         public TypeGenerator Class { get; private set; }

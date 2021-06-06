@@ -109,10 +109,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Modules\UnityEngine.dll</HintPath>
-    </Reference>
     <Reference Include="YamlDotNet, Version=8.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
       <HintPath>packages\YamlDotNet.8.1.2\lib\net45\YamlDotNet.dll</HintPath>
     </Reference>
@@ -120,105 +116,9 @@
   <ItemGroup>
     <Compile Include="Library\FileSystem.cs" />
     <Compile Include="Library\UnityFramework\CRCServiceProvider.cs" />
+    <Compile Include="Library\UnityFramework\Reflection.cs" />
     <Compile Include="Library\UnityFramework\StringExtensions.cs" />
     <Compile Include="Library\ExcelCell.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Annotations\Attributes.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Annotations\IMessagePackSerializationCallbackReceiver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\BitOperations.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\BufferWriter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\ExtensionHeader.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\ExtensionResult.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\CollectionFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\CollectionHelpers`2.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\DateTimeFormatters.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\DictionaryFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\DynamicObjectTypeFallbackFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\EnumAsStringFormatter`1.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\GenericEnumFormatter`1.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\IgnoreFormatter`1.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\IMessagePackFormatter`1.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\MultiDimensionalArrayFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\NilFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\NullableFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\PrimitiveObjectFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\StandardClassLibraryFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\TypelessFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Formatters\UnsafeBinaryFormatters.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\HashCode.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\IFormatterResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\AsymmetricKeyHashTable.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\AutomataDictionary.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\ByteArrayStringHashTable.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\CodeGenHelpers.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\DateTimeConstants.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\DynamicAssembly.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\ExpressionUtility.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\FarmHash.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\GuidBits.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\ILGeneratorExtensions.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\ReflectionExtensions.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\RuntimeTypeHandleEqualityComparer.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\Sequence`1.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\ThreadsafeTypeKeyHashTable.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\TinyJsonReader.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Internal\UnsafeMemory.Low.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.Helper.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.Safe.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.Safe32.Dirty.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.Safe64.Dirty.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.Unsafe.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.Unsafe32.Dirty.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\LZ4\LZ4Codec.Unsafe64.Dirty.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackCode.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackCompression.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackReader.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackSecurity.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackSerializationException.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackSerializer.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackSerializer.Json.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackSerializer.NonGeneric.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackSerializerOptions.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackStreamReader.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\MessagePackWriter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Nil.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\AttributeFormatterResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\BuiltinResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\CachingFormatterResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\CompositeResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\ContractlessReflectionObjectResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\DynamicEnumAsStringResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\DynamicEnumResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\DynamicGenericResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\DynamicObjectResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\DynamicUnionResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\NativeDateTimeResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\NativeDecimalResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\NativeGuidResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\PrimitiveObjectResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\StandardResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\StaticCompositeResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\TypelessContractlessStandardResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Resolvers\TypelessObjectResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\SafeBitConverter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\SequencePool.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\SequenceReader.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\SequenceReaderExtensions.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\StreamPolyfillExtensions.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\StringEncoding.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\T4\ForceSizePrimitiveFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\T4\MessagePackReader.Integers.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\T4\PrimitiveFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\T4\TupleFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\T4\UnsafeMemory.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\T4\ValueTupleFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\ThisLibraryExtensionTypeCodes.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Unity\Extension\UnityBlitResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Unity\Extension\UnsafeBlitFormatter.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Unity\Formatters.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Unity\MessagePackWindow.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Unity\UnityResolver.cs" />
-    <Compile Include="Modules\MessagePack\Scripts\MessagePack\Utilities.cs" />
     <Compile Include="Source\ContainerClass.cs" />
     <Compile Include="Source\Data.cs" />
     <Compile Include="Source\Settings.cs" />
@@ -227,7 +127,6 @@
     <Compile Include="Source\DataLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\EditXlsxBuilder.cs" />
-    <Compile Include="Source\MessagePackContractResolver.cs" />
     <Compile Include="Source\Program.cs" />
     <Compile Include="Source\DataWriter.cs" />
     <Compile Include="Source\SerializeClass.cs" />
@@ -244,7 +143,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Modules\MessagePack\Scripts\MessagePack\MessagePack.asmdef" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -261,10 +159,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon48x48.ico" />
-    <Content Include="Modules\MessagePack\Plugins\System.Buffers.dll" />
-    <Content Include="Modules\MessagePack\Plugins\System.Memory.dll" />
-    <Content Include="Modules\MessagePack\Plugins\System.Runtime.CompilerServices.Unsafe.dll" />
-    <Content Include="Modules\MessagePack\Plugins\System.Threading.Tasks.Extensions.dll" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

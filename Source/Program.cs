@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using CommandLine;
 using OfficeOpenXml;
 using Extensions;
@@ -24,12 +25,6 @@ namespace MasterConverter
             public string Mode { get; set; }
             [Option("tag", Required = false, HelpText = "Export target tags.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> ExportTags { get; set; }
-            [Option("export", Required = false, HelpText = "Export file. (messagepack or yaml or both).", Default = "both")]
-            public string Export { get; set; }
-            [Option("messagepack", Required = false, HelpText = "MessagePack export directory.", Default = null)]
-            public string MessagePackDirectory { get; set; }
-            [Option("yaml", Required = false, HelpText = "Yaml export directory.", Default = null)]
-            public string YamlDirectory { get; set; }
             [Option("exit", Required = false, HelpText = "Auto close on finish.", Default = true)]
             public bool Exit { get; set; }
         }
@@ -46,19 +41,10 @@ namespace MasterConverter
             arguments.Add(@"");             // 変換対象ディレクトリ ※ 「,」区切りで複数ディレクトリ指定可.
             
             arguments.Add("--mode");
-            arguments.Add("build");        // 動作モード [import / export / build].
+            arguments.Add("export");        // 動作モード [import / export].
 
             //arguments.Add("--tag");
             //arguments.Add("");            // 出力するタグ文字.
-
-            arguments.Add("--export");
-            arguments.Add("messagepack");            // 出力成果物 [messagepack / yaml / both].
-
-            //arguments.Add("--messagepack");
-            //arguments.Add("");            // MessagePack成果物出力先.
-
-            //arguments.Add("--yaml");
-            //arguments.Add("");            // Yaml成果物出力先.
 
             args = arguments.ToArray();
 
@@ -66,6 +52,7 @@ namespace MasterConverter
 
             //==================================================*/
 
+            // 引数.
             var options = Parser.Default.ParseArguments<CommandLineOptions>(args) as Parsed<CommandLineOptions>;
 
             if (options == null)
@@ -73,15 +60,16 @@ namespace MasterConverter
                 Exit("Arguments parse failed.");
             }
 
-            // 設定ファイル読み込み.
-            settings = new Settings();
-
             // EPPlus License setup.
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            // 設定ファイル読み込み.
+            settings = new Settings();
 
             // 自動終了.
             autoExit = options.Value.Exit;
 
+            // 対象取得.
             var inputs = options.Value.Inputs.ToArray();
 
             Console.WriteLine("\n--------- Target Directories ---------\n");
@@ -90,11 +78,40 @@ namespace MasterConverter
 
             Console.WriteLine("\n--------- Convert Processing ---------\n");
 
+            TypeUtility.CreateTypeTable();
+
             var targets = inputs.SelectMany(x => FindClassSchemaDirectories(x))
                 .Distinct()
                 .OrderBy(x => x, new NaturalComparer())
                 .ToArray();
 
+            try
+            {
+                // メイン処理.
+                var task = MainAsync(targets, options);
+
+                task.Wait();
+            }
+            catch (Exception e)
+            {
+                Exit(e.ToString());
+            }
+
+            Console.WriteLine("\nConvert Finished");
+
+            #if DEBUG
+
+            Console.ReadLine();
+
+            #endif
+
+            Environment.Exit(0);
+        }
+
+        static async Task MainAsync(string[] targets, Parsed<CommandLineOptions> options)
+        {
+            var tasks = new List<Task>();
+            
             foreach (var target in targets)
             {
                 var directory = string.Empty;
@@ -112,48 +129,45 @@ namespace MasterConverter
                         break;
                 }
 
-                try
+                if (!Directory.Exists(directory))
                 {
-                    if (!Directory.Exists(directory))
-                    {
-                        throw new DirectoryNotFoundException(string.Format("Directory not found. {0}", directory));
-                    }
-
-                    switch (options.Value.Mode)
-                    {
-                        case "import":
-                            Import(directory, options);
-                            break;
-
-                        case "export":
-                            Export(directory, options);
-                            break;
-
-                        case "build":
-                            Build(directory, options);
-                            break;
-
-                        default:
-                            throw new ArgumentException("Argument mode undefined.");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Exit(e.ToString());
+                    throw new DirectoryNotFoundException(string.Format("Directory not found. {0}", directory));
                 }
 
-                Console.WriteLine(" - {0}", target);
+                Action action = null;
+
+                switch (options.Value.Mode)
+                {
+                    case "import":
+                        action = async () => await Import(directory, options);
+                        break;
+
+                    case "export":
+                        action = async () => await Export(directory, options);
+                        break;
+
+                    default:
+                        throw new ArgumentException("Argument mode undefined.");
+                }
+
+                var task = Task.Run(() =>
+                {
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+
+                    action.Invoke();
+
+                    sw.Stop();
+
+                    Console.WriteLine(" - {0} ({1:F2}ms)", target, sw.Elapsed.TotalMilliseconds);
+                });
+
+                tasks.Add(task);
             }
 
-            Console.WriteLine("\nConvert Finished");
-
-            #if DEBUG
-
-            Console.ReadLine();
-
-            #endif
-
-            Environment.Exit(0);
+            if (tasks.Any())
+            {
+                await Task.WhenAll(tasks);
+            }
         }
 
         private static void Exit(string message)
@@ -189,7 +203,7 @@ namespace MasterConverter
                 .ToArray();
         }
 
-        private static void Import(string directory, Parsed<CommandLineOptions> options)
+        private static async Task Import(string directory, Parsed<CommandLineOptions> options)
         {
             var schemaFilePath = GetClassSchemaPath(directory);
 
@@ -204,7 +218,7 @@ namespace MasterConverter
             var indexData = DataLoader.LoadRecordIndex(excelFilePath);
 
             // レコード読み込み.            
-            var records = DataLoader.LoadYamlRecords(fileDirectory, serializeClass.Class);
+            var records = await DataLoader.LoadYamlRecords(fileDirectory, serializeClass.Class);
 
             // 編集用Excelを生成 + レコード入力.
 
@@ -214,7 +228,7 @@ namespace MasterConverter
             EditXlsxBuilder.Build(schemaFilePath, serializeClass, indexData, records, fieldNameRow, recordStartRow);
         }
 
-        private static void Export(string directory, Parsed<CommandLineOptions> options)
+        private static async Task Export(string directory, Parsed<CommandLineOptions> options)
         {
             var exportTags = options.Value.ExportTags.ToArray();
 
@@ -241,114 +255,11 @@ namespace MasterConverter
 
             var recordNames = records.Select(x => x.recordName).ToArray();
 
-            DataWriter.ExportYamlRecords(excelFilePath, recordNames, instances);
+            await DataWriter.ExportYamlRecords(excelFilePath, recordNames, instances);
 
-            DataWriter.ExportCellOption(excelFilePath, records);
+            await DataWriter.ExportCellOption(excelFilePath, records);
 
             DataWriter.ExportRecordIndex(excelFilePath, recordNames);
-        }
-
-        private static void Build(string directory, Parsed<CommandLineOptions> options)
-        {
-            var exportTags = options.Value.ExportTags.ToArray();
-            var export = options.Value.Export.ToLower();
-            var messagePackDirectory = options.Value.MessagePackDirectory;
-            var yamlDirectory = options.Value.YamlDirectory;
-
-            if (string.IsNullOrEmpty(export))
-            {
-                throw new ArgumentException(string.Format("{0} is undefined.", nameof(export)));
-            }
-
-            var lz4compress = settings.Export.lz4compress;
-
-            // DataEncryptor.
-
-            AesCryptoKey dataCryptoKey = null;
-            
-            if (!string.IsNullOrEmpty(settings.Export.AESKey) && !string.IsNullOrEmpty(settings.Export.AESIv))
-            {
-                dataCryptoKey = new AesCryptoKey(settings.Export.AESKey, settings.Export.AESIv);
-            }
-
-            // 出力ファイル名.
-
-            var filePath = GetEditExcelFilePath(directory);
-
-            // クラス構成読み込み.
-
-            var serializeClass = LoadClassSchema(directory, exportTags, true);
-
-            // レコード読み込み(除外フィールド含む).
-
-            var recordFileDirectory = GetRecordFileDirectory(directory);
-
-            var records = DataLoader.LoadYamlRecords(recordFileDirectory, serializeClass.Class);
-
-            // 除外対象のレコードを除外.
-
-            Func<RecordValue[], bool> isIgnoreRecord = recordValues =>
-            {
-                var recordValue = recordValues.FirstOrDefault(x => x.fieldName == Constants.IgnoreRecordFieldName);
-
-                if (recordValue == null){ return false; }
-
-                var value = recordValue.value as string;
-
-                return !string.IsNullOrEmpty(value);
-            };
-
-            records = records.Where(x => !isIgnoreRecord(x.values)).ToArray();
-
-            // 除外対象カラムを除外.
-
-            for (var i = 0; i < records.Length; i++)
-            {
-                var filteredValues = records[i].values.Where(y => !y.fieldName.StartsWith(Constants.IgnoreFieldPrefix)).ToArray();
-
-                records[i].values = filteredValues;
-            }
-            
-            // クラス構成再読み込み(除外フィールドなし).
-
-            serializeClass = LoadClassSchema(directory, exportTags, false);
-
-            // クラス変換.
-
-            var instances = DeserializeRecords(serializeClass, records);
-
-            // MessagePack出力.
-
-            if (export == "messagepack" || export == "both")
-            {
-                if (!string.IsNullOrEmpty(messagePackDirectory))
-                {
-                    filePath = PathUtility.Combine(messagePackDirectory, Path.GetFileName(filePath));
-                }
-
-                AesCryptoKey fileNameCryptoKey = null;
-
-                if (!string.IsNullOrEmpty(settings.File.MessagepackAESKey) && !string.IsNullOrEmpty(settings.File.MessagepackAESIv))
-                {
-                    fileNameCryptoKey = new AesCryptoKey(settings.File.MessagepackAESKey, settings.File.MessagepackAESIv);
-                }
-
-                var dataType = serializeClass.Class.Type;
-
-                DataWriter.ExportMessagePack(filePath, dataType, instances, lz4compress, dataCryptoKey, fileNameCryptoKey);
-            }
-
-            // Yaml出力.
-
-            if (export == "yaml" || export == "both")
-            {
-                if (!string.IsNullOrEmpty(yamlDirectory))
-                {
-                    filePath = PathUtility.Combine(yamlDirectory, Path.GetFileName(filePath));
-                }
-                
-                DataWriter.ExportYaml(filePath, instances);
-            }
         }
 
         // 編集用Excelファイルパス取得.

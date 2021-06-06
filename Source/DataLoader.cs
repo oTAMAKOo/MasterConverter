@@ -1,13 +1,11 @@
 ﻿
-using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Extensions;
 using OfficeOpenXml;
-using OfficeOpenXml.Style;
 using YamlDotNet.Serialization;
 
 namespace MasterConverter
@@ -30,7 +28,7 @@ namespace MasterConverter
         }
 
         /// <summary> レコード情報読み込み(.yaml) </summary>
-        public static RecordData[] LoadYamlRecords(string yamlDirectory, TypeGenerator typeGenerator)
+        public static async Task<RecordData[]> LoadYamlRecords(string yamlDirectory, TypeGenerator typeGenerator)
         {
             if (!Directory.Exists(yamlDirectory)) { return new RecordData[0]; }
 
@@ -39,73 +37,126 @@ namespace MasterConverter
                 .OrderBy(x => x, new NaturalComparer())
                 .ToArray();
 
+            // レコードファイル読み込み.
+
             var recordData = new Dictionary<string, string>();
 
-            foreach (var recordFile in recordFiles)
+            if (recordFiles.Any())
             {
-                using (var file = new FileStream(recordFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                var tasks = new List<Task>();
+
+                foreach (var recordFile in recordFiles)
                 {
-                    using (var reader = new StreamReader(file, Encoding.UTF8))
+                    var task = Task.Run(async () =>
                     {
-                        recordData.Add(recordFile, reader.ReadToEnd());
-                    }
+                        using (var file = new FileStream(recordFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        {
+                            using (var reader = new StreamReader(file, Encoding.UTF8))
+                            {
+                                var text = await reader.ReadToEndAsync();
+
+                                lock (recordData)
+                                {
+                                    recordData.Add(recordFile, text);
+                                }
+                            }
+                        }
+                    });
+
+                    tasks.Add(task);
                 }
+
+                await Task.WhenAll(tasks);
             }
+
+            // オプションデータ読み込み.
 
             var optionDataDictionary = new Dictionary<string, ExcelCell[]>();
 
-            foreach (var item in recordData)
+            if (recordData.Any())
             {
-                var recordFilePath = item.Key;
+                var tasks = new List<Task>();
 
-                var optionFilePath = Path.ChangeExtension(recordFilePath, Constants.CellOptionFileExtension);
-
-                if (!File.Exists(optionFilePath)) { continue; }
-
-                if(!optionDataDictionary.ContainsKey(optionFilePath))
+                foreach (var item in recordData)
                 {
-                    optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
+                    var recordFilePath = item.Key;
+
+                    var optionFilePath = Path.ChangeExtension(recordFilePath, Constants.CellOptionFileExtension);
+
+                    if (!File.Exists(optionFilePath)) { continue; }
+
+                    var task = Task.Run(() =>
+                    {
+                        if (!optionDataDictionary.ContainsKey(optionFilePath))
+                        {
+                            optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
+                        }
+
+                        var optionData = FileSystem.LoadFile<ExcelCell[]>(optionFilePath, FileSystem.Format.Yaml);
+
+                        lock (optionDataDictionary)
+                        {
+                            optionDataDictionary[recordFilePath] = optionData;
+                        }
+                    });
+
+                    tasks.Add(task);
                 }
 
-                var optionData = FileSystem.LoadFile<ExcelCell[]>(optionFilePath, FileSystem.Format.Yaml);
-
-                optionDataDictionary[recordFilePath] = optionData;
+                await Task.WhenAll(tasks);
             }
 
+            // レコードクラスに変換.
+
             var recordList = new List<RecordData>();
-            
-            var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
-            foreach (var item in recordData)
+            if (recordData.Any())
             {
-                var instance = deserializer.Deserialize(item.Value, typeGenerator.Type);
+                var tasks = new List<Task>();
 
-                var recordValues = new List<RecordValue>();
+                var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
-                foreach (var property in typeGenerator.Properties)
+                foreach (var item in recordData)
                 {
-                    var value = TypeGenerator.GetProperty(instance, property.Key, property.Value);
-
-                    var recordValue = new RecordValue()
+                    var task = Task.Run(() =>
                     {
-                        fieldName = property.Key,
-                        value = value,
-                    };
+                        var instance = deserializer.Deserialize(item.Value, typeGenerator.Type);
 
-                    recordValues.Add(recordValue);
+                        var recordValues = new List<RecordValue>();
+
+                        foreach (var property in typeGenerator.Properties)
+                        {
+                            var value = TypeGenerator.GetProperty(instance, property.Key, property.Value);
+
+                            var recordValue = new RecordValue()
+                            {
+                                fieldName = property.Key,
+                                value = value,
+                            };
+
+                            recordValues.Add(recordValue);
+                        }
+
+                        var values = recordValues.ToArray();
+
+                        var record = new RecordData()
+                        {
+                            recordName = GetRecordName(string.Empty, values),
+                            values = values,
+                            cells = optionDataDictionary.GetValueOrDefault(item.Key),
+                        };
+
+                        lock (recordList)
+                        {
+                            recordList.Add(record);
+                        }
+                    });
+
+                    tasks.Add(task);
                 }
 
-                var values = recordValues.ToArray();
-
-                var record = new RecordData()
-                {
-                    recordName = GetRecordName(string.Empty, values),
-                    values = values,
-                    cells = optionDataDictionary.GetValueOrDefault(item.Key),
-                };
-
-                recordList.Add(record);
-            };
+                await Task.WhenAll(tasks);
+            }
 
             // レコード名を重複しない形式に更新.
             recordList = UpdateRecordNames(recordList);
@@ -130,7 +181,7 @@ namespace MasterConverter
                 for (var r = recordStartRow; r <= address.End.Row; r++)
                 {
                     var recordValues = new List<RecordValue>();
-                    
+
                     var records = ExcelUtility.GetRowValues(worksheet, r).ToArray();
 
                     for (var i = 0; i < records.Length; i++)
