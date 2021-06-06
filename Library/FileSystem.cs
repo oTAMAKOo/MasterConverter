@@ -33,8 +33,6 @@ namespace Extensions
                             {
                                 using (var jsonTextWriter = new JsonTextWriter(writer))
                                 {
-                                    jsonTextWriter.Formatting = Formatting.Indented;
-
                                     var jsonSerializer = new JsonSerializer()
                                     {
                                         Formatting = Formatting.Indented,
