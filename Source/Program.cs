@@ -264,11 +264,11 @@ namespace MasterConverter
 
             // DataEncryptor.
 
-            AesManaged dataEncryptor = null;
+            AesCryptoKey dataCryptoKey = null;
             
             if (!string.IsNullOrEmpty(settings.Export.AESKey) && !string.IsNullOrEmpty(settings.Export.AESIv))
             {
-                dataEncryptor = AESExtension.CreateAesManaged(settings.Export.AESKey, settings.Export.AESIv);
+                dataCryptoKey = new AesCryptoKey(settings.Export.AESKey, settings.Export.AESIv);
             }
 
             // 出力ファイル名.
@@ -326,16 +326,16 @@ namespace MasterConverter
                     filePath = PathUtility.Combine(messagePackDirectory, Path.GetFileName(filePath));
                 }
 
-                AesManaged fileNameEncryptor = null;
+                AesCryptoKey fileNameCryptoKey = null;
 
                 if (!string.IsNullOrEmpty(settings.File.MessagepackAESKey) && !string.IsNullOrEmpty(settings.File.MessagepackAESIv))
                 {
-                    fileNameEncryptor = AESExtension.CreateAesManaged(settings.File.MessagepackAESKey, settings.File.MessagepackAESIv);
+                    fileNameCryptoKey = new AesCryptoKey(settings.File.MessagepackAESKey, settings.File.MessagepackAESIv);
                 }
 
                 var dataType = serializeClass.Class.Type;
 
-                DataWriter.ExportMessagePack(filePath, dataType, instances, lz4compress, dataEncryptor, fileNameEncryptor);
+                DataWriter.ExportMessagePack(filePath, dataType, instances, lz4compress, dataCryptoKey, fileNameCryptoKey);
             }
 
             // Yaml出力.

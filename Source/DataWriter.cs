@@ -50,7 +50,7 @@ namespace MasterConverter
             return exportPath;
         }
 
-        public static void ExportMessagePack(string exportPath, Type dataType, object[] values, bool lz4Compress, AesManaged dataEncryptor, AesManaged fileNameEncryptor)
+        public static void ExportMessagePack(string exportPath, Type dataType, object[] values, bool lz4Compress, AesCryptoKey dataCryptoKey, AesCryptoKey fileNameCryptoKey)
         {
             var filePath = GetExportPath(exportPath, Constants.MessagePackMasterFileExtension);
 
@@ -83,17 +83,17 @@ namespace MasterConverter
 
             #endif
 
-            if (dataEncryptor != null)
+            if (dataCryptoKey != null)
             {
-                bytes = bytes.Encrypt(dataEncryptor);
+                bytes = bytes.Encrypt(dataCryptoKey);
             }
 
-            if (fileNameEncryptor != null)
+            if (fileNameCryptoKey != null)
             {
                 var directory = Path.GetDirectoryName(filePath);
                 var fileName = Path.GetFileName(filePath);
 
-                fileName = fileName.Encrypt(fileNameEncryptor);
+                fileName = fileName.Encrypt(fileNameCryptoKey, true);
 
                 filePath = PathUtility.Combine(directory, fileName);
             }
