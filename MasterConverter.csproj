@@ -114,7 +114,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Library\FileSystem.cs" />
+    <Compile Include="Library\UnityFramework\SerializationFileUtility.cs" />
     <Compile Include="Library\UnityFramework\CRCServiceProvider.cs" />
     <Compile Include="Library\UnityFramework\Reflection.cs" />
     <Compile Include="Library\UnityFramework\StringExtensions.cs" />

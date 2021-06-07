@@ -24,7 +24,7 @@ namespace MasterConverter
         {
             var filePath = Path.ChangeExtension(excelFilePath, Constants.IndexFileExtension);
 
-            return FileSystem.LoadFile<IndexData>(filePath, FileSystem.Format.Yaml);
+            return SerializationFileUtility.LoadFile<IndexData>(filePath, SerializationFileUtility.Format.Yaml);
         }
 
         /// <summary> レコード情報読み込み(.yaml) </summary>
@@ -92,7 +92,7 @@ namespace MasterConverter
                             optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
                         }
 
-                        var optionData = FileSystem.LoadFile<ExcelCell[]>(optionFilePath, FileSystem.Format.Yaml);
+                        var optionData = SerializationFileUtility.LoadFile<ExcelCell[]>(optionFilePath, SerializationFileUtility.Format.Yaml);
 
                         lock (optionDataDictionary)
                         {

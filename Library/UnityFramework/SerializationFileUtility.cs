@@ -6,7 +6,7 @@ using YamlDotNet.Serialization;
 
 namespace Extensions
 {
-    public static class FileSystem
+    public static class SerializationFileUtility
     {
         public enum Format
         {

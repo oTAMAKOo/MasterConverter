@@ -27,7 +27,7 @@ namespace MasterConverter
                 records = recordNames
             };
 
-            FileSystem.WriteFile(filePath, indexData, FileSystem.Format.Yaml);
+            SerializationFileUtility.WriteFile(filePath, indexData, SerializationFileUtility.Format.Yaml);
         }
 
         private static string GetExportPath(string filePath, string extension)
@@ -87,7 +87,7 @@ namespace MasterConverter
                 {
                     var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);
 
-                    FileSystem.WriteFile(filePath, records[index], FileSystem.Format.Yaml);
+                    SerializationFileUtility.WriteFile(filePath, records[index], SerializationFileUtility.Format.Yaml);
                 });
 
                 tasks.Add(task);
@@ -112,7 +112,7 @@ namespace MasterConverter
                 {
                     var filePath = PathUtility.Combine(directory, record.recordName + Constants.CellOptionFileExtension);
 
-                    FileSystem.WriteFile(filePath, record.cells, FileSystem.Format.Yaml);
+                    SerializationFileUtility.WriteFile(filePath, record.cells, SerializationFileUtility.Format.Yaml);
                 });
 
                 tasks.Add(task);
