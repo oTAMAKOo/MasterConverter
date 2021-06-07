@@ -1,8 +1,12 @@
 ﻿
+using System;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json;
+using YamlDotNet.Core;
+using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.EventEmitters;
 
 namespace Extensions
 {
@@ -46,11 +50,9 @@ namespace Extensions
 
                         case Format.Yaml:
                             {
-                                var builder = new SerializerBuilder();
-
-                                builder.ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull);
-
-                                var yamlSerializer = builder.Build();
+                                var yamlSerializer = new SerializerBuilder()
+                                    .WithEventEmitter(nextEmitter => new NullStringsAsEmptyEventEmitter(nextEmitter))
+                                    .Build();
 
                                 yamlSerializer.Serialize(writer, value);
                             }
@@ -60,11 +62,16 @@ namespace Extensions
             }
         }
 
-        public static T LoadFile<T>(string filePath, Format format) where T : class 
+        public static T LoadFile<T>(string filePath, Format format) where T : class
+        {
+            return LoadFile(filePath, typeof(T), format) as T;
+        }
+
+        public static object LoadFile(string filePath, Type type, Format format)
         {
             if (!File.Exists(filePath)) { return null; }
 
-            T result = null;
+            object result = null;
 
             using (var file = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
@@ -82,7 +89,7 @@ namespace Extensions
                                         NullValueHandling = NullValueHandling.Ignore,
                                     };
 
-                                    result = jsonSerializer.Deserialize<T>(jsonTextReader);
+                                    result = jsonSerializer.Deserialize(jsonTextReader, type);
                                 }
                             }
                             break;
@@ -96,8 +103,8 @@ namespace Extensions
                                 builder.IgnoreUnmatchedProperties();
 
                                 var yamlDeserializer = builder.Build();
-                                
-                                result = yamlDeserializer.Deserialize<T>(contents);
+
+                                result = yamlDeserializer.Deserialize(contents, type);
                             }
                             break;
                     }
@@ -105,6 +112,23 @@ namespace Extensions
             }
 
             return result;
+        }
+
+        private sealed class NullStringsAsEmptyEventEmitter : ChainedEventEmitter
+        {
+            public NullStringsAsEmptyEventEmitter(IEventEmitter nextEmitter) : base(nextEmitter) { }
+
+            public override void Emit(ScalarEventInfo eventInfo, IEmitter emitter)
+            {
+                if (eventInfo.Source.Type == typeof(string) && eventInfo.Source.Value == null)
+                {
+                    emitter.Emit(new Scalar(string.Empty));
+                }
+                else
+                {
+                    base.Emit(eventInfo, emitter);
+                }
+            }
         }
     }
 }

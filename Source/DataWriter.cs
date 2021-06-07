@@ -18,7 +18,7 @@ namespace MasterConverter
 
         //----- method -----
 
-        public static void ExportRecordIndex(string excelFilePath, string[] recordNames)
+        public static void ExportRecordIndex(string excelFilePath, string[] recordNames, SerializationFileUtility.Format format)
         {
             var filePath = Path.ChangeExtension(excelFilePath, Constants.IndexFileExtension);
 
@@ -27,7 +27,7 @@ namespace MasterConverter
                 records = recordNames
             };
 
-            SerializationFileUtility.WriteFile(filePath, indexData, SerializationFileUtility.Format.Yaml);
+            SerializationFileUtility.WriteFile(filePath, indexData, format);
         }
 
         private static string GetExportPath(string filePath, string extension)
@@ -49,7 +49,7 @@ namespace MasterConverter
             return exportPath;
         }
 
-        public static void CreateCleanDirectory(string exportPath)
+        public static async Task CreateCleanDirectory(string exportPath)
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
            
@@ -60,18 +60,20 @@ namespace MasterConverter
                 // ディレクトリの削除は非同期で実行される為、削除完了するまで待機する.
                 while (Directory.Exists(directory))
                 {
-                    Thread.Sleep(100);
+                    await Task.Delay(TimeSpan.FromMilliseconds(50));
                 }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(50));
             }
 
             Directory.CreateDirectory(directory);            
         }
 
-        public static async Task ExportYamlRecords(string exportPath, string[] recordNames, object[] records)
+        public static async Task ExportRecords(string exportPath, string[] recordNames, object[] records, SerializationFileUtility.Format format)
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
 
-            CreateCleanDirectory(directory);
+            await CreateCleanDirectory(directory);
 
             var tasks = new List<Task>();
 
@@ -87,7 +89,7 @@ namespace MasterConverter
                 {
                     var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);
 
-                    SerializationFileUtility.WriteFile(filePath, records[index], SerializationFileUtility.Format.Yaml);
+                    SerializationFileUtility.WriteFile(filePath, records[index], format);
                 });
 
                 tasks.Add(task);
@@ -96,7 +98,7 @@ namespace MasterConverter
             await Task.WhenAll(tasks);
         }
 
-        public static async Task ExportCellOption(string exportPath, RecordData[] records)
+        public static async Task ExportCellOption(string exportPath, RecordData[] records, SerializationFileUtility.Format format)
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
 
@@ -112,7 +114,7 @@ namespace MasterConverter
                 {
                     var filePath = PathUtility.Combine(directory, record.recordName + Constants.CellOptionFileExtension);
 
-                    SerializationFileUtility.WriteFile(filePath, record.cells, SerializationFileUtility.Format.Yaml);
+                    SerializationFileUtility.WriteFile(filePath, record.cells, format);
                 });
 
                 tasks.Add(task);

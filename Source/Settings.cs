@@ -20,11 +20,19 @@ namespace MasterConverter
             public int recordStartRow = 5;
         }
 
+        public class FileSettings
+        {
+            /// <summary> ファイルフォーマット </summary>
+            public string format = "yaml";
+        }
+
         //----- field -----
 
         //----- property -----
 
         public MasterSettings Master { get; private set; }
+
+        public FileSettings File { get; private set; }
 
         //----- method -----        
 
@@ -37,6 +45,8 @@ namespace MasterConverter
             var iniFilePath = Path.Combine(directory.FullName, "settings.ini");
 
             Master = IniFile.Read<MasterSettings>("Master", iniFilePath);
+
+            File = IniFile.Read<FileSettings>("File", iniFilePath);
         }
     }
 }

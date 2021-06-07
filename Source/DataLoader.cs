@@ -1,10 +1,12 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Extensions;
+using Newtonsoft.Json;
 using OfficeOpenXml;
 using YamlDotNet.Serialization;
 
@@ -16,19 +18,23 @@ namespace MasterConverter
 
         //----- field -----
 
+        private static JsonSerializerSettings jsonSerializerSettings = null;
+
+        private static IDeserializer yamlDeserializer = null;
+
         //----- property -----
 
         //----- method -----
 
-        public static IndexData LoadRecordIndex(string excelFilePath)
+        public static IndexData LoadRecordIndex(string excelFilePath, SerializationFileUtility.Format format)
         {
             var filePath = Path.ChangeExtension(excelFilePath, Constants.IndexFileExtension);
 
-            return SerializationFileUtility.LoadFile<IndexData>(filePath, SerializationFileUtility.Format.Yaml);
+            return SerializationFileUtility.LoadFile<IndexData>(filePath, format);
         }
 
         /// <summary> レコード情報読み込み(.yaml) </summary>
-        public static async Task<RecordData[]> LoadYamlRecords(string yamlDirectory, TypeGenerator typeGenerator)
+        public static async Task<RecordData[]> LoadRecords(string yamlDirectory, TypeGenerator typeGenerator, SerializationFileUtility.Format format)
         {
             if (!Directory.Exists(yamlDirectory)) { return new RecordData[0]; }
 
@@ -92,7 +98,7 @@ namespace MasterConverter
                             optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
                         }
 
-                        var optionData = SerializationFileUtility.LoadFile<ExcelCell[]>(optionFilePath, SerializationFileUtility.Format.Yaml);
+                        var optionData = SerializationFileUtility.LoadFile<ExcelCell[]>(optionFilePath, format);
 
                         lock (optionDataDictionary)
                         {
@@ -113,14 +119,12 @@ namespace MasterConverter
             if (recordData.Any())
             {
                 var tasks = new List<Task>();
-
-                var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
-
+                
                 foreach (var item in recordData)
                 {
                     var task = Task.Run(() =>
                     {
-                        var instance = deserializer.Deserialize(item.Value, typeGenerator.Type);
+                        var instance = Deserialize(typeGenerator.Type, item.Value, format);
 
                         var recordValues = new List<RecordValue>();
 
@@ -162,6 +166,46 @@ namespace MasterConverter
             recordList = UpdateRecordNames(recordList);
 
             return recordList.ToArray();
+        }
+
+        private static object Deserialize(Type type, string text, SerializationFileUtility.Format format)
+        {
+            object result = null;
+
+            switch (format)
+            {
+                case SerializationFileUtility.Format.Json:
+                {
+                    if (jsonSerializerSettings == null)
+                    {
+                        jsonSerializerSettings = new JsonSerializerSettings()
+                        {
+                            Formatting = Formatting.Indented,
+                            NullValueHandling = NullValueHandling.Ignore,
+                        };
+                    }
+
+                    result = JsonConvert.DeserializeObject(text, type, jsonSerializerSettings);
+                }
+                    break;
+
+                case SerializationFileUtility.Format.Yaml:
+                {
+                    if (yamlDeserializer == null)
+                    {
+                        var builder = new DeserializerBuilder();
+
+                        builder.IgnoreUnmatchedProperties();
+
+                        yamlDeserializer = builder.Build();
+                    }
+
+                    result = yamlDeserializer.Deserialize(text, type);
+                }
+                    break;
+            }
+
+            return result;
         }
 
         /// <summary> レコード情報読み込み(.xlsx) </summary>

@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using CommandLine;
 using OfficeOpenXml;
@@ -15,18 +14,19 @@ namespace MasterConverter
     class Program
     {
         private static Settings settings = null;
-        private static bool autoExit = false;
+
+        private static bool autoExit = true;
 
         class CommandLineOptions
         {
             [Option("input", Required = true, HelpText = "Convert targets directorys.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> Inputs { get; set; }
-            [Option("mode", Required = true, HelpText = "Convert mode. (import or export or build).")]
+            [Option("mode", Required = true, HelpText = "Convert mode. (import or export).")]
             public string Mode { get; set; }
             [Option("tag", Required = false, HelpText = "Export target tags.", Separator = ',', Default = new string[0])]
             public IEnumerable<string> ExportTags { get; set; }
-            [Option("exit", Required = false, HelpText = "Auto close on finish.", Default = true)]
-            public bool Exit { get; set; }
+            [Option("exit", Required = false, HelpText = "Auto close on finish.")]
+            public bool AutoExit { get; set; }
         }
 
         static void Main(string[] args)
@@ -45,7 +45,7 @@ namespace MasterConverter
 
             //arguments.Add("--tag");
             //arguments.Add("");            // 出力するタグ文字.
-
+            
             args = arguments.ToArray();
 
             #endif
@@ -67,7 +67,7 @@ namespace MasterConverter
             settings = new Settings();
 
             // 自動終了.
-            autoExit = options.Value.Exit;
+            autoExit = options.Value.AutoExit;
 
             // 対象取得.
             var inputs = options.Value.Inputs.ToArray();
@@ -99,19 +99,34 @@ namespace MasterConverter
 
             Console.WriteLine("\nConvert Finished");
 
-            #if DEBUG
-
-            Console.ReadLine();
-
-            #endif
-
-            Environment.Exit(0);
+            Exit();
         }
 
         static async Task MainAsync(string[] targets, Parsed<CommandLineOptions> options)
         {
+            // フォーマット.
+
+            var format = SerializationFileUtility.Format.Yaml;
+
+            switch (settings.File.format)
+            {
+                case "yaml":
+                    format = SerializationFileUtility.Format.Yaml;
+                    break;
+
+                case "json":
+                    format = SerializationFileUtility.Format.Json;
+                    break;
+            }
+
+            // タグ.
+
+            var exportTags = options.Value.ExportTags.ToArray();
+
+            // メイン処理.
+
             var tasks = new List<Task>();
-            
+
             foreach (var target in targets)
             {
                 var directory = string.Empty;
@@ -133,28 +148,24 @@ namespace MasterConverter
                 {
                     throw new DirectoryNotFoundException(string.Format("Directory not found. {0}", directory));
                 }
-
-                Action action = null;
-
-                switch (options.Value.Mode)
-                {
-                    case "import":
-                        action = async () => await Import(directory, options);
-                        break;
-
-                    case "export":
-                        action = async () => await Export(directory, options);
-                        break;
-
-                    default:
-                        throw new ArgumentException("Argument mode undefined.");
-                }
-
-                var task = Task.Run(() =>
+                
+                var task = Task.Run( async () =>
                 {
                     var sw = System.Diagnostics.Stopwatch.StartNew();
 
-                    action.Invoke();
+                    switch (options.Value.Mode)
+                    {
+                        case "import":
+                            await Import(directory, format);
+                            break;
+
+                        case "export":
+                            await Export(directory, exportTags, format);
+                            break;
+
+                        default:
+                            throw new ArgumentException("Argument mode undefined.");
+                    }
 
                     sw.Stop();
 
@@ -170,7 +181,7 @@ namespace MasterConverter
             }
         }
 
-        private static void Exit(string message)
+        private static void Exit(string message = null)
         {
             if (!string.IsNullOrEmpty(message))
             {
@@ -190,7 +201,7 @@ namespace MasterConverter
 
             #endif
 
-            Environment.Exit(1);
+            Environment.Exit(string.IsNullOrEmpty(message) ? 0 : 1);
         }
 
         private static string[] FindClassSchemaDirectories(string directory)
@@ -203,7 +214,7 @@ namespace MasterConverter
                 .ToArray();
         }
 
-        private static async Task Import(string directory, Parsed<CommandLineOptions> options)
+        private static async Task Import(string directory, SerializationFileUtility.Format format)
         {
             var schemaFilePath = GetClassSchemaPath(directory);
 
@@ -215,10 +226,10 @@ namespace MasterConverter
             var serializeClass = LoadClassSchema(directory, null, true);
 
             // インデックス情報読み込み.
-            var indexData = DataLoader.LoadRecordIndex(excelFilePath);
+            var indexData = DataLoader.LoadRecordIndex(excelFilePath, format);
 
             // レコード読み込み.            
-            var records = await DataLoader.LoadYamlRecords(fileDirectory, serializeClass.Class);
+            var records = await DataLoader.LoadRecords(fileDirectory, serializeClass.Class, format);
 
             // 編集用Excelを生成 + レコード入力.
 
@@ -228,10 +239,8 @@ namespace MasterConverter
             EditXlsxBuilder.Build(schemaFilePath, serializeClass, indexData, records, fieldNameRow, recordStartRow);
         }
 
-        private static async Task Export(string directory, Parsed<CommandLineOptions> options)
+        private static async Task Export(string directory, string[] exportTags, SerializationFileUtility.Format format)
         {
-            var exportTags = options.Value.ExportTags.ToArray();
-
             // 出力ファイル名.
 
             var excelFilePath = GetEditExcelFilePath(directory);
@@ -255,11 +264,11 @@ namespace MasterConverter
 
             var recordNames = records.Select(x => x.recordName).ToArray();
 
-            await DataWriter.ExportYamlRecords(excelFilePath, recordNames, instances);
+            await DataWriter.ExportRecords(excelFilePath, recordNames, instances, format);
 
-            await DataWriter.ExportCellOption(excelFilePath, records);
+            await DataWriter.ExportCellOption(excelFilePath, records, format);
 
-            DataWriter.ExportRecordIndex(excelFilePath, recordNames);
+            DataWriter.ExportRecordIndex(excelFilePath, recordNames, format);
         }
 
         // 編集用Excelファイルパス取得.
