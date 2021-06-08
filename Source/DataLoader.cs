@@ -93,15 +93,15 @@ namespace MasterConverter
 
                     var task = Task.Run(() =>
                     {
-                        if (!optionDataDictionary.ContainsKey(optionFilePath))
-                        {
-                            optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
-                        }
-
                         var optionData = SerializationFileUtility.LoadFile<ExcelCell[]>(optionFilePath, format);
 
                         lock (optionDataDictionary)
                         {
+                            if (!optionDataDictionary.ContainsKey(optionFilePath))
+                            {
+                                optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
+                            }
+
                             optionDataDictionary[recordFilePath] = optionData;
                         }
                     });
