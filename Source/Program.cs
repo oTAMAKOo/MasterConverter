@@ -91,13 +91,13 @@ namespace MasterConverter
                 var task = MainAsync(targets, options);
 
                 task.Wait();
+
+                Console.WriteLine("\nConvert Finished");
             }
             catch (Exception e)
             {
                 Exit(e.ToString());
             }
-
-            Console.WriteLine("\nConvert Finished");
 
             Exit();
         }
@@ -151,25 +151,34 @@ namespace MasterConverter
                 
                 var task = Task.Run( async () =>
                 {
-                    var sw = System.Diagnostics.Stopwatch.StartNew();
-
-                    switch (options.Value.Mode)
+                    try
                     {
-                        case "import":
-                            await Import(directory, format);
-                            break;
+                        var sw = System.Diagnostics.Stopwatch.StartNew();
 
-                        case "export":
-                            await Export(directory, exportTags, format);
-                            break;
+                        switch (options.Value.Mode)
+                        {
+                            case "import":
+                                await Import(directory, format);
+                                break;
 
-                        default:
-                            throw new ArgumentException("Argument mode undefined.");
+                            case "export":
+                                await Export(directory, exportTags, format);
+                                break;
+
+                            default:
+                                throw new ArgumentException("Argument mode undefined.");
+                        }
+
+                        sw.Stop();
+
+                        Console.WriteLine(" - {0} ({1:F2}ms)", target, sw.Elapsed.TotalMilliseconds);
                     }
+                    catch
+                    {
+                        Console.WriteLine(" Failed: {0}", target);
 
-                    sw.Stop();
-
-                    Console.WriteLine(" - {0} ({1:F2}ms)", target, sw.Elapsed.TotalMilliseconds);
+                        throw;
+                    }
                 });
 
                 tasks.Add(task);

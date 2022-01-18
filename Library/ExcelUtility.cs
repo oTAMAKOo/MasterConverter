@@ -147,16 +147,26 @@ namespace Extensions
 
             var font = cell.Style.Font;
 
-            var drawingFont = fonts.FirstOrDefault(x => x.Name == font.Name && x.Size == font.Size);
+            Font drawingFont;
 
-            if (drawingFont == null)
+            lock (fonts)
             {
-                drawingFont = new Font(font.Name, font.Size);
+                drawingFont = fonts.FirstOrDefault(x => x.Name == font.Name && x.Size == font.Size);
 
-                fonts.Add(drawingFont);
+                if (drawingFont == null)
+                {
+                    drawingFont = new Font(font.Name, font.Size);
+
+                    fonts.Add(drawingFont);
+                }
             }
 
-            var size = graphics.MeasureString(cell.Text, drawingFont);
+            SizeF size;
+
+            lock (graphics)
+            {
+                size = graphics.MeasureString(cell.Text, drawingFont);
+            }
 
             return Convert.ToDouble(size.Width) / 5.7;
         }
@@ -166,19 +176,29 @@ namespace Extensions
             if (string.IsNullOrEmpty(cell.Text)) { return 0.0; }
 
             var font = cell.Style.Font;
+
+            Font drawingFont;
             
-            var drawingFont = fonts.FirstOrDefault(x => x.Name == font.Name && x.Size == font.Size);
-
-            if (drawingFont == null)
+            lock (fonts)
             {
-                drawingFont = new Font(font.Name, font.Size);
+                drawingFont = fonts.FirstOrDefault(x => x.Name == font.Name && x.Size == font.Size);
 
-                fonts.Add(drawingFont);
+                if (drawingFont == null)
+                {
+                    drawingFont = new Font(font.Name, font.Size);
+
+                    fonts.Add(drawingFont);
+                }
             }
 
             var pixelWidth = Convert.ToInt32(width * 7.5);
 
-            var size = graphics.MeasureString(cell.Text, drawingFont, pixelWidth);
+            SizeF size;
+
+            lock (graphics)
+            {
+                size = graphics.MeasureString(cell.Text, drawingFont, pixelWidth);
+            }
 
             return Math.Min(Convert.ToDouble(size.Height) * 72 / 96 * 1.2, 409) + 2;
         }
