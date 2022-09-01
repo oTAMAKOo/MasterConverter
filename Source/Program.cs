@@ -313,12 +313,11 @@ namespace MasterConverter
             }            
 
             var serializeClass = new SerializeClass();
-
-            var tagRow = settings.Master.tagRow;
+            
             var dataTypeRow = settings.Master.dataTypeRow;
             var fieldNameRow = settings.Master.fieldNameRow;
 
-            serializeClass.LoadClassSchema(schemaFilePath, exportTags, tagRow, dataTypeRow, fieldNameRow, addIgnoreField);
+            serializeClass.LoadClassSchema(schemaFilePath, exportTags, dataTypeRow, fieldNameRow, addIgnoreField);
 
             return serializeClass;
         }

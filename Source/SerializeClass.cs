@@ -5,7 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using Extensions;
 using OfficeOpenXml;
 
@@ -17,7 +16,6 @@ namespace MasterConverter
 
         private class Property
         {
-            public bool export;
             public Type type;
             public string fieldName;
         }
@@ -34,7 +32,7 @@ namespace MasterConverter
         //----- method -----
 
         /// <summary> Excelからクラス情報を読み込み </summary>
-        public void LoadClassSchema(string classSchemaFilePath, string[] exportTags, int tagRow, int dataTypeRow, int fieldNameRow, bool addIgnoreField)
+        public void LoadClassSchema(string classSchemaFilePath, string[] exportTags, int dataTypeRow, int fieldNameRow, bool addIgnoreField)
         {
             if(!File.Exists(classSchemaFilePath))
             {
@@ -48,7 +46,6 @@ namespace MasterConverter
                 var sheet = excel.Workbook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
                 var address = sheet.Dimension;
                 
-                var tags = ExcelUtility.GetRowValueTexts(sheet, tagRow).ToArray();
                 var dataTypes = ExcelUtility.GetRowValueTexts(sheet, dataTypeRow).ToArray();
                 var fieldNames = ExcelUtility.GetRowValueTexts(sheet, fieldNameRow).ToArray();
 
@@ -56,8 +53,6 @@ namespace MasterConverter
 
                 for (var i = 0; i < address.End.Column; i++)
                 {
-                    var tag = tags[i];
-
                     var fieldName = fieldNames[i];
 
                     if (string.IsNullOrEmpty(fieldName)){ continue; }
@@ -76,7 +71,6 @@ namespace MasterConverter
 
                     var property = new Property()
                     {
-                        export = exportTags.IsEmpty() || exportTags.Contains(tag),
                         type = TypeUtility.GetTypeFromSystemTypeName(dataType),
                         fieldName = fieldName.Trim(' ', '　', '\n', '\t'),
                     };
@@ -91,8 +85,6 @@ namespace MasterConverter
 
             foreach (var info in properties)
             {
-                if (!info.export) { continue; }
-
                 if (string.IsNullOrEmpty(info.fieldName)) { continue; }
 
                 if (info.type == null) { continue; }
@@ -115,8 +107,6 @@ namespace MasterConverter
                 if (property == null) { continue; }
 
                 if (property.type == null) { continue; }
-
-                if (!property.export) { continue; }
 
                 try
                 {

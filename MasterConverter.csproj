@@ -126,7 +126,6 @@
     <Compile Include="Source\Program.cs" />
     <Compile Include="Source\DataWriter.cs" />
     <Compile Include="Source\SerializeClass.cs" />
-    <Compile Include="Library\UnityFramework\AESExtensions.cs" />
     <Compile Include="Library\UnityFramework\DictionaryExtensions.cs" />
     <Compile Include="Library\UnityFramework\DirectoryUtility.cs" />
     <Compile Include="Library\UnityFramework\EnumerableExtensions.cs" />

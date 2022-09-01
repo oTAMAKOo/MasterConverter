@@ -10,14 +10,12 @@ namespace MasterConverter
         
         public class MasterSettings
         {
-            /// <summary> マスター：タグ定義行 </summary>
-            public int tagRow = 2;
             /// <summary> マスター：型名定義名行 </summary>
-            public int dataTypeRow = 3;
+            public int dataTypeRow = 2;
             /// <summary> マスター：フィールド名定義行 </summary>
-            public int fieldNameRow = 4;
+            public int fieldNameRow = 3;
             /// <summary> マスター：レコード開始行 </summary>
-            public int recordStartRow = 5;
+            public int recordStartRow = 4;
         }
 
         public class FileSettings
@@ -44,7 +42,7 @@ namespace MasterConverter
 
             var iniFilePath = Path.Combine(directory.FullName, "settings.ini");
 
-            Master = IniFile.Read<MasterSettings>("Master", iniFilePath);
+            Master = IniFile.Read<MasterSettings>("Rows", iniFilePath);
 
             File = IniFile.Read<FileSettings>("File", iniFilePath);
         }
