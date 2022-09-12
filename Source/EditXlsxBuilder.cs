@@ -50,7 +50,8 @@ namespace MasterConverter
 
             using (var excel = new ExcelPackage(editXlsxFile))
             {
-                var worksheet = excel.Workbook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
+                var workBook = excel.Workbook;
+                var worksheet = workBook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
                 var dimension = worksheet.Dimension;
 
                 // セルサイズ調整.
@@ -211,6 +212,13 @@ namespace MasterConverter
                 ExcelUtility.FitColumnSize(worksheet, celFitRange, null, 75, wrapTextCallback);
 
                 ExcelUtility.FitRowSize(worksheet, celFitRange);
+
+                // マスターのシートをアクティブにする.
+
+                var avtiveTab = workBook.Worksheets.IndexOf(x => x.Name == Constants.MasterSheetName);
+
+                workBook.View.ActiveTab = avtiveTab;
+                worksheet.Select();
 
                 // 保存.
                 excel.Save();
