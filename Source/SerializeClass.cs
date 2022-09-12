@@ -32,14 +32,12 @@ namespace MasterConverter
         //----- method -----
 
         /// <summary> Excelからクラス情報を読み込み </summary>
-        public void LoadClassSchema(string classSchemaFilePath, string[] exportTags, int dataTypeRow, int fieldNameRow, bool addIgnoreField)
+        public void LoadClassSchema(string classSchemaFilePath, int dataTypeRow, int fieldNameRow, bool addIgnoreField)
         {
             if(!File.Exists(classSchemaFilePath))
             {
                 throw new FileNotFoundException(string.Format("ClassSchema file not found. {0}", classSchemaFilePath));
             }
-
-            exportTags = exportTags ?? new string[0];
 
             using (var excel = new ExcelPackage(new FileInfo(classSchemaFilePath)))
             {

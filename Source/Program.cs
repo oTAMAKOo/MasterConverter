@@ -23,8 +23,6 @@ namespace MasterConverter
             public IEnumerable<string> Inputs { get; set; }
             [Option("mode", Required = true, HelpText = "Convert mode. (import or export).")]
             public string Mode { get; set; }
-            [Option("tag", Required = false, HelpText = "Export target tags.", Separator = ',', Default = new string[0])]
-            public IEnumerable<string> ExportTags { get; set; }
             [Option("exit", Required = false, HelpText = "Auto close on finish.")]
             public bool AutoExit { get; set; }
         }
@@ -43,9 +41,6 @@ namespace MasterConverter
             arguments.Add("--mode");
             arguments.Add("export");        // 動作モード [import / export].
 
-            //arguments.Add("--tag");
-            //arguments.Add("");            // 出力するタグ文字.
-            
             args = arguments.ToArray();
 
             #endif
@@ -119,10 +114,6 @@ namespace MasterConverter
                     break;
             }
 
-            // タグ.
-
-            var exportTags = options.Value.ExportTags.ToArray();
-
             // メイン処理.
 
             var tasks = new List<Task>();
@@ -162,7 +153,7 @@ namespace MasterConverter
                                 break;
 
                             case "export":
-                                await Export(directory, exportTags, format);
+                                await Export(directory, format);
                                 break;
 
                             default:
@@ -232,7 +223,7 @@ namespace MasterConverter
             var excelFilePath = GetEditExcelFilePath(directory);
 
             // クラス構成読み込み.
-            var serializeClass = LoadClassSchema(directory, null, true);
+            var serializeClass = LoadClassSchema(directory, true);
 
             // インデックス情報読み込み.
             var indexData = DataLoader.LoadRecordIndex(excelFilePath, format);
@@ -248,7 +239,7 @@ namespace MasterConverter
             EditXlsxBuilder.Build(schemaFilePath, serializeClass, indexData, records, fieldNameRow, recordStartRow);
         }
 
-        private static async Task Export(string directory, string[] exportTags, SerializationFileUtility.Format format)
+        private static async Task Export(string directory, SerializationFileUtility.Format format)
         {
             // 出力ファイル名.
 
@@ -256,7 +247,7 @@ namespace MasterConverter
 
             // クラス構成読み込み.
 
-            var serializeClass = LoadClassSchema(directory, exportTags, true);
+            var serializeClass = LoadClassSchema(directory, true);
 
             // レコード取得.
 
@@ -303,7 +294,7 @@ namespace MasterConverter
         }
 
         // クラス構成読み込み.
-        private static SerializeClass LoadClassSchema(string directory, string[] exportTags, bool addIgnoreField)
+        private static SerializeClass LoadClassSchema(string directory, bool addIgnoreField)
         {
             var schemaFilePath = GetClassSchemaPath(directory);
 
@@ -317,7 +308,7 @@ namespace MasterConverter
             var dataTypeRow = settings.Master.dataTypeRow;
             var fieldNameRow = settings.Master.fieldNameRow;
 
-            serializeClass.LoadClassSchema(schemaFilePath, exportTags, dataTypeRow, fieldNameRow, addIgnoreField);
+            serializeClass.LoadClassSchema(schemaFilePath, dataTypeRow, fieldNameRow, addIgnoreField);
 
             return serializeClass;
         }

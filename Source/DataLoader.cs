@@ -321,6 +321,8 @@ namespace MasterConverter
 
                 if (recordValue == null) { continue; }
 
+                if (recordValue.fieldName.StartsWith(Constants.IgnoreFieldPrefix)){ continue; }
+
                 var value = recordValue.value != null ? recordValue.value.ToString() : null;
 
                 if (string.IsNullOrEmpty(value)) { continue; }

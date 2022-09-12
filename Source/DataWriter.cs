@@ -33,9 +33,7 @@ namespace MasterConverter
         private static string GetExportPath(string filePath, string extension)
         {
             const string MasterSuffix = "Master";
-
-            var exportPath = string.Empty;
-
+            
             var directory = Path.GetDirectoryName(filePath);
             var fileName = Path.GetFileNameWithoutExtension(filePath);
 
@@ -44,7 +42,7 @@ namespace MasterConverter
                 fileName = fileName.SafeSubstring(0, fileName.Length - MasterSuffix.Length);
             }
 
-            exportPath = PathUtility.Combine(directory, fileName) + extension;
+            var exportPath = PathUtility.Combine(directory, fileName) + extension;
 
             return exportPath;
         }
@@ -121,15 +119,6 @@ namespace MasterConverter
             }
 
             await Task.WhenAll(tasks);
-        }
-
-        private static void CreateFileDirectory(string filePath)
-        {
-            var directory = Path.GetDirectoryName(filePath);
-
-            if (Directory.Exists(directory)) { return; }
-            
-            Directory.CreateDirectory(directory);            
         }
     }
 }

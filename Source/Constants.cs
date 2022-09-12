@@ -33,8 +33,5 @@ namespace MasterConverter
 
         /// <summary> 除外フィールド先頭文字 </summary>
         public const string IgnoreFieldPrefix = "#";
-
-        /// <summary> レコード除外フィールド名 </summary>
-        public const string IgnoreRecordFieldName = IgnoreFieldPrefix + "Ignore";
     }
 }

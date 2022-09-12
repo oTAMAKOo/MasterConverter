@@ -177,6 +177,9 @@ namespace MasterConverter
                         // Excelのセルは1開始なので1加算.
                         var cell = worksheet.Cells[recordRow, fieldColumn + 1];
 
+                        // 折りたたんで全体表示無効.
+                        cell.Style.WrapText = false;
+
                         // 値設定.
                         cell.Value = value;
                     }
@@ -191,6 +194,9 @@ namespace MasterConverter
                         }
                     }
                 }
+
+                // 範囲更新.
+                dimension = worksheet.Dimension;
                 
                 // セルサイズを調整.
                 
