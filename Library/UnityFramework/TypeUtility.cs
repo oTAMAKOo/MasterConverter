@@ -13,7 +13,7 @@ namespace Extensions
 
         //----- field -----
 
-        private static Dictionary<string, Type> TypeTable = null;
+        private static Dictionary<string, Type>? TypeTable = null;
 
         //----- property -----
 
@@ -23,9 +23,11 @@ namespace Extensions
         {
             if (TypeTable != null) { return; }
 
-            TypeTable = new Dictionary<string, Type>();
-
             var mscorlib = Assembly.GetAssembly(typeof(int));
+
+            if(mscorlib == null){ return; }
+
+            TypeTable = new Dictionary<string, Type>();
 
             using (var provider = new CSharpCodeProvider())
             {

@@ -39,7 +39,7 @@ namespace MasterConverter
             arguments.Add(@"");             // 変換対象ディレクトリ ※ 「,」区切りで複数ディレクトリ指定可.
             
             arguments.Add("--mode");
-            arguments.Add("export");        // 動作モード [import / export].
+            arguments.Add("import");        // 動作モード [import / export].
 
             args = arguments.ToArray();
 

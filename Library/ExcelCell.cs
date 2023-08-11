@@ -1,9 +1,8 @@
 ﻿
-using System;
-using System.Drawing;
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing;
 using OfficeOpenXml.Style;
+using System.Drawing;
 
 namespace Extensions
 {

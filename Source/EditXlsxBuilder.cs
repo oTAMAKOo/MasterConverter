@@ -54,8 +54,16 @@ namespace MasterConverter
                 var worksheet = workBook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
                 var dimension = worksheet.Dimension;
 
-                // セルサイズ調整.
-                worksheet.Cells.AutoFitColumns();
+                // カラム初期幅.
+
+                var columnsWidth = new Dictionary<int, double>();
+
+                for (var c = dimension.Start.Column; c <= dimension.End.Column; c++)
+                {
+                    var width = worksheet.Columns[c].Width;
+
+                    columnsWidth[c] = width;
+                }
 
                 // エラー無視.
                 var excelIgnoredError = worksheet.IgnoredErrors.Add(dimension);
@@ -178,8 +186,16 @@ namespace MasterConverter
                         // Excelのセルは1開始なので1加算.
                         var cell = worksheet.Cells[recordRow, fieldColumn + 1];
 
-                        // 折りたたんで全体表示無効.
-                        cell.Style.WrapText = false;
+                        // 折り畳んで全体表示無効.
+                        var wrapText = false;
+                        
+                        // 改行を含む場合は折り畳む.
+                        if (value is string text)
+                        {
+                            wrapText = text.FixLineEnd().Contains("\n");
+                        }
+
+                        cell.Style.WrapText = wrapText;
 
                         // 値設定.
                         cell.Value = value;
@@ -191,7 +207,7 @@ namespace MasterConverter
                     {
                         foreach (var cellData in records[i].cells)
                         {
-                            ExcelCellUtility.Set<ExcelCell>(worksheet, recordRow, cellData.column, cellData);
+                            ExcelCellUtility.Set(worksheet, recordRow, cellData.column, cellData);
                         }
                     }
                 }
@@ -203,15 +219,18 @@ namespace MasterConverter
                 
                 var celFitRange = worksheet.Cells[1, 1, dimension.End.Row, dimension.End.Column];
 
-                Func<int, int, string, bool> wrapTextCallback = (r, c, text) =>
+                celFitRange.AutoFitColumns();
+
+                for (var c = celFitRange.Start.Column; c <= celFitRange.End.Column; c++)
                 {
-                    // 改行が含まれている.
-                    return text.FixLineEnd().Contains("\n");
-                };
+                    var baseWidth = columnsWidth.GetValueOrDefault(c);
+                    var currentWidth = worksheet.Column(c).Width;
 
-                ExcelUtility.FitColumnSize(worksheet, celFitRange, null, 75, wrapTextCallback);
-
-                ExcelUtility.FitRowSize(worksheet, celFitRange);
+                    if (currentWidth < baseWidth)
+                    {
+                        worksheet.Column(c).Width = baseWidth;
+                    }
+                }
 
                 // マスターのシートをアクティブにする.
 
