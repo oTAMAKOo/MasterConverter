@@ -190,7 +190,7 @@ namespace MasterConverter
                         var wrapText = false;
                         
                         // 改行を含む場合は折り畳む.
-                        if (value is string text)
+                        if (value is string text && !string.IsNullOrEmpty(text))
                         {
                             wrapText = text.FixLineEnd().Contains("\n");
                         }

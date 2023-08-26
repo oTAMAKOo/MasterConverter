@@ -36,10 +36,14 @@ namespace MasterConverter
             var arguments = new List<string>();
             
             arguments.Add("--input");
-            arguments.Add(@"");             // 変換対象ディレクトリ ※ 「,」区切りで複数ディレクトリ指定可.
+
+            // 変換対象ディレクトリ ※ 「,」区切りで複数ディレクトリ指定可.
+            arguments.Add(@"");
             
             arguments.Add("--mode");
-            arguments.Add("import");        // 動作モード [import / export].
+
+            // 動作モード [import / export].
+            arguments.Add("import");
 
             args = arguments.ToArray();
 
