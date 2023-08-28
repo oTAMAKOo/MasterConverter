@@ -222,9 +222,15 @@ namespace MasterConverter
         {
             var schemaFilePath = GetClassSchemaPath(directory);
 
-            var fileDirectory = GetRecordFileDirectory(directory);
+            var recordDirectory = GetRecordFileDirectory(directory);
 
             var excelFilePath = GetEditExcelFilePath(directory);
+
+            // 最終更新日確認.
+
+            var isRequireImport = DataLoader.IsRequireImport(excelFilePath, recordDirectory);
+
+            if (!isRequireImport){ return; }
 
             // クラス構成読み込み.
             var serializeClass = LoadClassSchema(directory, true);
@@ -233,7 +239,7 @@ namespace MasterConverter
             var indexData = DataLoader.LoadRecordIndex(excelFilePath, format);
 
             // レコード読み込み.            
-            var records = await DataLoader.LoadRecords(fileDirectory, serializeClass.Class, format);
+            var records = await DataLoader.LoadRecords(recordDirectory, serializeClass.Class, format);
 
             // 編集用Excelを生成 + レコード入力.
 
@@ -245,9 +251,14 @@ namespace MasterConverter
 
         private static async Task Export(string directory, SerializationFileUtility.Format format)
         {
-            // 出力ファイル名.
-
             var excelFilePath = GetEditExcelFilePath(directory);
+            var recordDirectory = GetRecordFileDirectory(directory);
+
+            // 最終更新日確認.
+
+            var isRequireExport = DataLoader.IsRequireExport(excelFilePath, recordDirectory);
+
+            if (!isRequireExport){ return; }
 
             // クラス構成読み込み.
 

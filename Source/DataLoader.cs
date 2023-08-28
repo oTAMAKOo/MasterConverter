@@ -1,10 +1,5 @@
 ﻿
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Extensions;
 using Newtonsoft.Json;
 using OfficeOpenXml;
@@ -26,6 +21,86 @@ namespace MasterConverter
 
         //----- method -----
 
+                /// <summary> Importが必要か </summary>
+        public static bool IsRequireImport(string excelFilePath, string yamlDirectory)
+        {
+            if (!File.Exists(excelFilePath)){ return true; }
+
+            var lastUpdateTime = File.GetLastWriteTimeUtc(excelFilePath);
+
+            // IndexFile.
+            {
+                var filePath = Path.ChangeExtension(excelFilePath, Constants.IndexFileExtension);
+
+                if (File.Exists(filePath))
+                {
+                    if(lastUpdateTime < File.GetLastWriteTimeUtc(filePath)){ return true; }
+                }
+            }
+
+            // RecordFile.
+            {
+                if (Directory.Exists(yamlDirectory))
+                {
+                    var filePaths = Directory.EnumerateFiles(yamlDirectory, "*.*")
+                        .Where(x =>
+                           {
+                               var extension = Path.GetExtension(x);
+
+                               return extension == Constants.RecordFileExtension || extension == Constants.CellOptionFileExtension;
+                           })
+                        .ToArray();
+
+                    foreach (var filePath in filePaths)
+                    {
+                        if (lastUpdateTime < File.GetLastWriteTimeUtc(filePath)){ return true; }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary> Exportが必要か </summary>
+        public static bool IsRequireExport(string excelFilePath, string yamlDirectory)
+        {
+            if (!File.Exists(excelFilePath)){ return false; }
+
+            var lastUpdateTime = File.GetLastWriteTimeUtc(excelFilePath);
+
+            // IndexFile.
+            {
+                var filePath = Path.ChangeExtension(excelFilePath, Constants.IndexFileExtension);
+
+                if (File.Exists(filePath))
+                {
+                    if(File.GetLastWriteTimeUtc(filePath) < lastUpdateTime){ return true; }
+                }
+            }
+
+            // RecordFile.
+            {
+                if (Directory.Exists(yamlDirectory))
+                {
+                    var filePaths = Directory.EnumerateFiles(yamlDirectory, "*.*")
+                        .Where(x =>
+                               {
+                                   var extension = Path.GetExtension(x);
+
+                                   return extension == Constants.RecordFileExtension || extension == Constants.CellOptionFileExtension;
+                               })
+                        .ToArray();
+
+                    foreach (var filePath in filePaths)
+                    {
+                        if (File.GetLastWriteTimeUtc(filePath) < lastUpdateTime){ return true; }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public static IndexData LoadRecordIndex(string excelFilePath, SerializationFileUtility.Format format)
         {
             var filePath = Path.ChangeExtension(excelFilePath, Constants.IndexFileExtension);
@@ -34,11 +109,11 @@ namespace MasterConverter
         }
 
         /// <summary> レコード情報読み込み(.yaml) </summary>
-        public static async Task<RecordData[]> LoadRecords(string yamlDirectory, TypeGenerator typeGenerator, SerializationFileUtility.Format format)
+        public static async Task<RecordData[]> LoadRecords(string recordDirectory, TypeGenerator typeGenerator, SerializationFileUtility.Format format)
         {
-            if (!Directory.Exists(yamlDirectory)) { return new RecordData[0]; }
+            if (!Directory.Exists(recordDirectory)) { return new RecordData[0]; }
 
-            var recordFiles = Directory.EnumerateFiles(yamlDirectory, "*.*")
+            var recordFiles = Directory.EnumerateFiles(recordDirectory, "*.*")
                 .Where(x => Path.GetExtension(x) == Constants.RecordFileExtension)
                 .OrderBy(x => x, new NaturalComparer())
                 .ToArray();
