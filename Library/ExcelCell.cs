@@ -159,8 +159,21 @@ namespace Extensions
             var hasValue = false;
 
             hasValue |= !string.IsNullOrEmpty(cellData.comment);
-            hasValue |= cellData.fontColor != null;
             hasValue |= cellData.backgroundColor != null;
+
+            if (cellData.fontColor != null)
+            {
+                var fontColor = cellData.fontColor;
+
+                if (!fontColor.tint.HasValue && !fontColor.theme.HasValue)
+                {
+                    hasValue = true;
+                }
+                else
+                {
+                    hasValue |= fontColor.rgb != "FF000000";
+                }
+            }
 
             return !hasValue;
         }

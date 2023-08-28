@@ -71,20 +71,18 @@ namespace MasterConverter
         {
             var directory = PathUtility.Combine(Directory.GetParent(exportPath).FullName, Constants.RecordsFolderName);
 
-            await CreateCleanDirectory(directory);
-
             var tasks = new List<Task>();
 
             for (var i = 0; i < recordNames.Length; i++)
             {
-                var fileName = recordNames[i].Trim();
-
-                if (string.IsNullOrEmpty(fileName)) { continue; }
-
                 var index = i;
 
                 var task = Task.Run(() =>
                 {
+                    var fileName = recordNames[index].Trim();
+
+                    if (string.IsNullOrEmpty(fileName)) { return; }
+
                     var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);
 
                     SerializationFileUtility.WriteFile(filePath, records[index], format);

@@ -275,13 +275,21 @@ namespace MasterConverter
 
             var instances = DeserializeRecords(serializeClass, records);
             
+            // ディレクトリ作成.
+
+            await DataWriter.CreateCleanDirectory(recordDirectory);
+
             // レコード出力.
 
             var recordNames = records.Select(x => x.recordName).ToArray();
 
-            await DataWriter.ExportRecords(excelFilePath, recordNames, instances, format);
+            var tasks = new Task[] 
+            {
+                DataWriter.ExportRecords(excelFilePath, recordNames, instances, format),
+                DataWriter.ExportCellOption(excelFilePath, records, format),
+            };
 
-            await DataWriter.ExportCellOption(excelFilePath, records, format);
+            await Task.WhenAll(tasks);
 
             DataWriter.ExportRecordIndex(excelFilePath, recordNames, format);
         }
