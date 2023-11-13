@@ -21,7 +21,7 @@ namespace MasterConverter
 
         //----- method -----
 
-                /// <summary> Importが必要か </summary>
+        /// <summary> Importが必要か </summary>
         public static bool IsRequireImport(string excelFilePath, string yamlDirectory)
         {
             if (!File.Exists(excelFilePath)){ return true; }
@@ -76,6 +76,10 @@ namespace MasterConverter
                 {
                     if(File.GetLastWriteTimeUtc(filePath) < lastUpdateTime){ return true; }
                 }
+                else
+                {
+                    return true;
+                }
             }
 
             // RecordFile.
@@ -95,6 +99,10 @@ namespace MasterConverter
                     {
                         if (File.GetLastWriteTimeUtc(filePath) < lastUpdateTime){ return true; }
                     }
+                }
+                else
+                {
+                    return true;
                 }
             }
 
