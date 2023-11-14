@@ -82,30 +82,6 @@ namespace MasterConverter
                 }
             }
 
-            // RecordFile.
-            {
-                if (Directory.Exists(yamlDirectory))
-                {
-                    var filePaths = Directory.EnumerateFiles(yamlDirectory, "*.*")
-                        .Where(x =>
-                               {
-                                   var extension = Path.GetExtension(x);
-
-                                   return extension == Constants.RecordFileExtension || extension == Constants.CellOptionFileExtension;
-                               })
-                        .ToArray();
-
-                    foreach (var filePath in filePaths)
-                    {
-                        if (File.GetLastWriteTimeUtc(filePath) < lastUpdateTime){ return true; }
-                    }
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
             return false;
         }
 
