@@ -160,6 +160,10 @@ namespace MasterConverter
 
                                 value = string.Format("[{0}]", valueTexts.Any() ? string.Join(",", valueTexts) : string.Empty);
                             }
+                            else if (type == typeof(DateTime))
+                            {
+                                value = recordValue.value.ToString();
+                            }
                             else
                             {
                                 value = recordValue.value;
