@@ -140,6 +140,12 @@ namespace MasterConverter
                         
                         if (fieldColumn == -1) { continue; }
 
+                        // Excelのセルは1開始なので1加算.
+                        var cell = worksheet.Cells[recordRow, fieldColumn + 1];
+
+                        // 数式があるセルへはデータ入力を行わない.
+                        if(!string.IsNullOrEmpty(cell.Formula)) { continue; }
+
                         object value = null;
 
                         if (recordValue.value != null)
@@ -186,9 +192,6 @@ namespace MasterConverter
                                 }
                             }
                         }
-
-                        // Excelのセルは1開始なので1加算.
-                        var cell = worksheet.Cells[recordRow, fieldColumn + 1];
 
                         // 折り畳んで全体表示無効.
                         var wrapText = false;
