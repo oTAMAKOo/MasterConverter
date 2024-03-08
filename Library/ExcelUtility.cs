@@ -45,7 +45,15 @@ namespace Extensions
 
             for (var i = address.Start.Column; i <= address.End.Column; i++)
             {
-                var value = sheet.GetValue(row, i);
+                var cell = sheet.Cells[row, i];
+
+                var value = cell.Value;
+
+                // 数式があるセルへは空データ扱い.
+                if (!string.IsNullOrEmpty(cell.Formula))
+                {
+                    value = string.Empty;
+                }
 
                 values.Add(value);
             }
