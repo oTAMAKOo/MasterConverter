@@ -1,4 +1,5 @@
 ﻿
+using System.Collections.Generic;
 using System.Text;
 using Extensions;
 using Newtonsoft.Json;
@@ -330,10 +331,34 @@ namespace MasterConverter
                 }
             }
 
+            // 全レコード重複のデータが存在するか.
+            var duplicates =HasDuplication(recordList);
+
+            if (duplicates.Any())
+            {
+                var builder = new StringBuilder();
+
+                duplicates.ForEach(x => builder.AppendLine(x));
+
+                throw new Exception($"Has duplication record!\n{builder}");
+            }
+
             // レコード名を重複しない形式に更新.
             recordList = UpdateRecordNames(recordList);
 
             return recordList.ToArray();
+        }
+
+        /// <summary> 全レコード重複のデータが存在するか </summary>
+        public static string[] HasDuplication(List<RecordData> records)
+        {
+            var duplicates = records.Select(x => String.Join(",", x.values.Select(y => y.value)))
+                .GroupBy(name => name)
+                .Where(name => name.Count() > 1)
+                .Select(group => group.Key)
+                .ToArray();
+
+            return duplicates;
         }
 
         private static List<RecordData> UpdateRecordNames(List<RecordData> records)

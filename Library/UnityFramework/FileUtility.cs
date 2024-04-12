@@ -39,19 +39,34 @@ namespace Extensions
         /// <summary>
         /// 指定されたファイルがロックされているかどうか.
         /// </summary>
-        /// <param name="path">検証したいファイルへのフルパス</param>
+        /// <param name="filePath">検証したいファイルへのフルパス</param>
         /// <returns>ロックされているかどうか</returns>
-        public static bool IsFileLocked(string path)
+        public static bool IsFileLocked(string filePath)
         {
             FileStream stream = null;
 
             try
             {
-                stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                stream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
             }
-            catch
+            catch (DirectoryNotFoundException)
             {
-                return true;
+                return false;
+            }
+            catch (FileNotFoundException)
+            {
+                return false;
+            }
+            catch (IOException)
+            {
+                if (File.Exists(filePath))
+                {
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
             }
             finally
             {

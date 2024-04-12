@@ -76,16 +76,23 @@ namespace MasterConverter
             for (var i = 0; i < recordNames.Length; i++)
             {
                 var index = i;
+                var recordName = recordNames[index];
+                var record = records[index];
 
-                var task = Task.Run(() =>
+                var task = Task.Run(async () =>
                 {
-                    var fileName = recordNames[index].Trim();
+                    var fileName = recordName.Trim();
 
                     if (string.IsNullOrEmpty(fileName)) { return; }
 
                     var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);
 
-                    SerializationFileUtility.WriteFile(filePath, records[index], format);
+                    while (FileUtility.IsFileLocked(filePath))
+                    {
+                        await Task.Delay(1);
+                    }
+
+                    SerializationFileUtility.WriteFile(filePath, record, format);
                 });
 
                 tasks.Add(task);
@@ -102,15 +109,23 @@ namespace MasterConverter
 
             foreach (var record in records)
             {
-                if (record.cells == null){ continue; }
+                var cells = record.cells;
+                var recordName = record.recordName;
 
-                if (record.cells.IsEmpty()){ continue; }
+                if (cells == null){ continue; }
 
-                var task = Task.Run(() =>
+                if (cells.IsEmpty()){ continue; }
+
+                var task = Task.Run(async () =>
                 {
-                    var filePath = PathUtility.Combine(directory, record.recordName + Constants.CellOptionFileExtension);
+                    var filePath = PathUtility.Combine(directory, recordName + Constants.CellOptionFileExtension);
 
-                    SerializationFileUtility.WriteFile(filePath, record.cells, format);
+                    while (FileUtility.IsFileLocked(filePath))
+                    {
+                        await Task.Delay(1);
+                    }
+
+                    SerializationFileUtility.WriteFile(filePath, cells, format);
                 });
 
                 tasks.Add(task);

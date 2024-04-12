@@ -29,7 +29,7 @@ namespace MasterConverter
 
         static void Main(string[] args)
         {
-            /*=== 開発用 ========================================
+            //=== 開発用 ========================================
         
             #if DEBUG
 
@@ -43,7 +43,7 @@ namespace MasterConverter
             arguments.Add("--mode");
 
             // 動作モード [import / export].
-            arguments.Add("import");
+            arguments.Add("export");
 
             args = arguments.ToArray();
 
