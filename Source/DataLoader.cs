@@ -340,7 +340,7 @@ namespace MasterConverter
 
                 duplicates.ForEach(x => builder.AppendLine(x));
 
-                throw new Exception($"Has duplication record!\n{builder}");
+                throw new Exception($"Duplication records exist!\nFile : {excelFilePath}\n{builder}");
             }
 
             // レコード名を重複しない形式に更新.
@@ -352,7 +352,9 @@ namespace MasterConverter
         /// <summary> 全レコード重複のデータが存在するか </summary>
         public static string[] HasDuplication(List<RecordData> records)
         {
-            var duplicates = records.Select(x => String.Join(",", x.values.Select(y => y.value)))
+            var duplicates = records
+                .Where(x => x.values.Any(y => y.value != null))
+                .Select(x => String.Join(",", x.values.Select(y => y.value)))
                 .GroupBy(name => name)
                 .Where(name => name.Count() > 1)
                 .Select(group => group.Key)
