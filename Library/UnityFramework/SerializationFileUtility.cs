@@ -7,6 +7,7 @@ using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.EventEmitters;
+using YamlDotNet.Serialization.TypeInspectors;
 
 namespace Extensions
 {
@@ -98,11 +99,10 @@ namespace Extensions
                             {
                                 var contents = reader.ReadToEnd();
 
-                                var builder = new DeserializerBuilder();
-
-                                builder.IgnoreUnmatchedProperties();
-
-                                var yamlDeserializer = builder.Build();
+                                var yamlDeserializer = new DeserializerBuilder()
+                                    .WithTypeInspector(x => new SortedTypeInspector(x))
+                                    .IgnoreUnmatchedProperties()
+                                    .Build();
 
                                 result = yamlDeserializer.Deserialize(contents, type);
                             }
@@ -128,6 +128,21 @@ namespace Extensions
                 {
                     base.Emit(eventInfo, emitter);
                 }
+            }
+        }
+
+        private sealed class SortedTypeInspector : TypeInspectorSkeleton
+        {
+            private readonly ITypeInspector _innerTypeInspector;
+
+            public SortedTypeInspector(ITypeInspector innerTypeInspector)
+            {
+                _innerTypeInspector = innerTypeInspector;
+            }
+
+            public override IEnumerable<IPropertyDescriptor> GetProperties(Type type, object container)
+            {
+                return _innerTypeInspector.GetProperties(type, container).OrderBy(x => x.Name);
             }
         }
     }
