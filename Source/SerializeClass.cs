@@ -98,7 +98,9 @@ namespace MasterConverter
         {
             var instance = Class.NewInstance();
 
-            foreach (var item in fieldValues)
+            var items = fieldValues.OrderBy(x => x.Key, new NaturalComparer()).ToArray();
+
+            foreach (var item in items)
             {
                 var property = properties.FirstOrDefault(x => x.fieldName == item.Key);
 
