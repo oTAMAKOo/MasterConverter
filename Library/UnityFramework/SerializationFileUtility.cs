@@ -52,6 +52,7 @@ namespace Extensions
                         case Format.Yaml:
                             {
                                 var yamlSerializer = new SerializerBuilder()
+                                    .WithTypeInspector(x => new SortedTypeInspector(x))
                                     .WithEventEmitter(nextEmitter => new NullStringsAsEmptyEventEmitter(nextEmitter))
                                     .Build();
 
