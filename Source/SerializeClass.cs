@@ -76,7 +76,7 @@ namespace MasterConverter
                     list.Add(property);
                 }
 
-                properties = list.ToArray();
+                properties = list.OrderBy(x => x.fieldName, new NaturalComparer()).ToArray();
             }
 
             var dictionary = new Dictionary<string, Type>();
@@ -98,9 +98,7 @@ namespace MasterConverter
         {
             var instance = Class.NewInstance();
 
-            var items = fieldValues.OrderBy(x => x.Key, new NaturalComparer()).ToArray();
-
-            foreach (var item in items)
+            foreach (var item in fieldValues)
             {
                 var property = properties.FirstOrDefault(x => x.fieldName == item.Key);
 
