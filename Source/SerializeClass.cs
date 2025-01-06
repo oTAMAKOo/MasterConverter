@@ -76,7 +76,7 @@ namespace MasterConverter
                     list.Add(property);
                 }
 
-                properties = list.OrderBy(x => x.fieldName, new NaturalComparer()).ToArray();
+                properties = list.ToArray();
             }
 
             var dictionary = new Dictionary<string, Type>();

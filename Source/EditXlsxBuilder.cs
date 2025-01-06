@@ -1,15 +1,7 @@
 ﻿
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using Extensions;
 using OfficeOpenXml;
-using OfficeOpenXml.ConditionalFormatting;
-using OfficeOpenXml.ConditionalFormatting.Contracts;
-using OfficeOpenXml.Style;
 
 namespace MasterConverter
 {

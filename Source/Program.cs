@@ -1,10 +1,5 @@
 ﻿
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using CommandLine;
 using OfficeOpenXml;
 using Extensions;
@@ -43,7 +38,7 @@ namespace MasterConverter
             arguments.Add("--mode");
 
             // 動作モード [import / export].
-            arguments.Add("export");
+            arguments.Add("import");
 
             args = arguments.ToArray();
 
