@@ -162,7 +162,7 @@ namespace MasterConverter
                                 optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
                             }
 
-                            optionDataDictionary[recordFilePath] = optionData;
+                            optionDataDictionary[optionFilePath] = optionData;
                         }
                     });
 
