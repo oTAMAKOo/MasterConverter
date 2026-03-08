@@ -275,13 +275,15 @@ namespace MasterConverter
 
             if (!File.Exists(excelFilePath)) { return new RecordData[0]; }
 
+            var rowTracker = new Dictionary<string, List<(int row, RecordValue[] values)>>();
+
             using (var excel = new ExcelPackage(new FileInfo(excelFilePath)))
             {
                 var worksheet = excel.Workbook.Worksheets.FirstOrDefault(x => x.Name == Constants.MasterSheetName);
                 var address = worksheet.Dimension;
 
                 var fieldNames = ExcelUtility.GetRowValueTexts(worksheet, fieldNameRow).ToArray();
-                
+
                 for (var r = recordStartRow; r <= address.End.Row; r++)
                 {
                     var recordValues = new List<RecordValue>();
@@ -320,6 +322,9 @@ namespace MasterConverter
 
                     var values = recordValues.ToArray();
 
+                    // 全フィールドが空のレコードはスキップ.
+                    if (values.All(v => string.IsNullOrEmpty(v.value?.ToString()))) { continue; }
+
                     var record = new RecordData()
                     {
                         recordName = GetRecordName(string.Empty, values),
@@ -327,18 +332,33 @@ namespace MasterConverter
                         cells = cells.Any() ? cells.ToArray() : null,
                     };
 
+                    var rowKey = string.Join(",", values.Select(y => y.value));
+                    if (!rowTracker.ContainsKey(rowKey))
+                        rowTracker[rowKey] = new List<(int, RecordValue[])>();
+                    rowTracker[rowKey].Add((r, values));
+
                     recordList.Add(record);
                 }
             }
 
             // 全レコード重複のデータが存在するか.
-            var duplicates =HasDuplication(recordList);
+            var duplicateGroups = rowTracker
+                .Where(x => x.Value.Count > 1 && x.Value[0].values.Any(y => y.value != null))
+                .ToArray();
 
-            if (duplicates.Any())
+            if (duplicateGroups.Any())
             {
                 var builder = new StringBuilder();
 
-                duplicates.ForEach(x => builder.AppendLine(x));
+                foreach (var dup in duplicateGroups)
+                {
+                    var rows = string.Join(", ", dup.Value.Select(x => x.row));
+                    var nonEmptyFields = dup.Value[0].values.Where(v => v.value != null).ToArray();
+                    var fields = nonEmptyFields.Any()
+                        ? string.Join(", ", nonEmptyFields.Select(v => $"{v.fieldName}={v.value}"))
+                        : "(empty)";
+                    builder.AppendLine($"  [Row {rows}] {fields}");
+                }
 
                 throw new Exception($"Duplication records exist!\nFile : {excelFilePath}\n{builder}");
             }
