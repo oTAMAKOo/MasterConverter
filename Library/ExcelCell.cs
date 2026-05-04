@@ -61,13 +61,16 @@ namespace Extensions
             SetColor(cell.Style.Fill.BackgroundColor, cellData.backgroundColor);
         }
 
-        public static T Get<T>(ExcelWorksheet worksheet, int row, int column) where T : ExcelCell
+        public static T Get<T>(ExcelWorksheet worksheet, int row, int column) where T : ExcelCell, new()
         {
             if (!ValidateAddress(worksheet, row, column)) { return null; }
 
             var cell = worksheet.Cells[row, column];
 
-            var cellData = Activator.CreateInstance<T>();
+            // コメントもカスタムスタイルもなければスキップ.
+            if (cell.Comment == null && cell.StyleID == 0) { return null; }
+
+            var cellData = new T();
 
             if (cell.Comment != null)
             {
@@ -165,12 +168,14 @@ namespace Extensions
             {
                 var fontColor = cellData.fontColor;
 
-                if (!fontColor.tint.HasValue && !fontColor.theme.HasValue)
+                if (fontColor.theme.HasValue)
                 {
+                    // テーマカラー（GetFontColorでText1/tint=0は除外済み = カスタム色確定）.
                     hasValue = true;
                 }
                 else
                 {
+                    // RGBのみ（旧Excelや明示設定）: デフォルト黒でなければカスタム色.
                     hasValue |= fontColor.rgb != "FF000000";
                 }
             }

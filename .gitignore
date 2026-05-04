@@ -6,6 +6,10 @@
 *.user
 *.sln.docstates
 
+# Rider
+
+.idea
+
 # Visual Studio cache directory
 .vs/
 

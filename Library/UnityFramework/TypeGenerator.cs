@@ -21,6 +21,8 @@ namespace Extensions
 
         //----- field -----
 
+        private readonly Dictionary<string, PropertyInfo> propertyInfoCache;
+
         //----- property -----
 
         public Type Type { get; private set; }
@@ -43,6 +45,13 @@ namespace Extensions
         {
             Type = Create(className, properties);
             Properties = properties;
+
+            propertyInfoCache = new Dictionary<string, PropertyInfo>();
+
+            foreach (var prop in properties)
+            {
+                propertyInfoCache[prop.Key] = Type.GetProperty(prop.Key, prop.Value);
+            }
         }
 
         private static Type Create(string className, Dictionary<string, Type> properties)
@@ -113,39 +122,25 @@ namespace Extensions
         }
 
         /// <summary>
-        /// 指定したプロパティから値を取得する
+        /// キャッシュ済みPropertyInfoから値を取得する
         /// </summary>
-        /// <param name="obj">取得する対象のインスタンス</param>
-        /// <param name="propertyName">プロパティ名</param>
-        /// <param name="type">タイプ</param>
-        /// <returns>取得した値</returns>
-        public static object GetProperty(object obj, string propertyName, Type type)
+        public object GetCachedProperty(object obj, string propertyName)
         {
-            var info = obj.GetType().GetProperty(propertyName, type);
+            if (!propertyInfoCache.TryGetValue(propertyName, out var info)) { return null; }
 
-            if (info == null || !info.CanRead)
-            {
-                return null;
-            }
+            if (info == null || !info.CanRead) { return null; }
 
             return info.GetValue(obj, null);
         }
 
         /// <summary>
-        /// 指定したプロパティに値を設定する
+        /// キャッシュ済みPropertyInfoに値を設定する
         /// </summary>
-        /// <param name="obj">取得する対象のインスタンス</param>
-        /// <param name="propertyName">プロパティ名</param>
-        /// <param name="value"></param>
-        /// <param name="type">タイプ</param>
-        public static void SetProperty(object obj, string propertyName, object value, Type type)
+        public void SetCachedProperty(object obj, string propertyName, object value)
         {
-            var info = obj.GetType().GetProperty(propertyName, type);
+            if (!propertyInfoCache.TryGetValue(propertyName, out var info)) { return; }
 
-            if (info == null || !info.CanWrite)
-            {
-                return;
-            }
+            if (info == null || !info.CanWrite) { return; }
 
             info.SetValue(obj, value, null);
         }

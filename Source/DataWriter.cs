@@ -79,7 +79,7 @@ namespace MasterConverter
                 var recordName = recordNames[index];
                 var record = records[index];
 
-                var task = Task.Run(async () =>
+                var task = Task.Run(() =>
                 {
                     var fileName = recordName.Trim();
 
@@ -87,12 +87,7 @@ namespace MasterConverter
 
                     var filePath = PathUtility.Combine(directory, fileName + Constants.RecordFileExtension);
 
-                    while (FileUtility.IsFileLocked(filePath))
-                    {
-                        await Task.Delay(1);
-                    }
-
-                    SerializationFileUtility.WriteFile(filePath, record, format);
+                    SerializationFileUtility.WriteFile(filePath, record, format, ensureDirectory: false);
                 });
 
                 tasks.Add(task);
@@ -116,16 +111,11 @@ namespace MasterConverter
 
                 if (cells.IsEmpty()){ continue; }
 
-                var task = Task.Run(async () =>
+                var task = Task.Run(() =>
                 {
                     var filePath = PathUtility.Combine(directory, recordName + Constants.CellOptionFileExtension);
 
-                    while (FileUtility.IsFileLocked(filePath))
-                    {
-                        await Task.Delay(1);
-                    }
-
-                    SerializationFileUtility.WriteFile(filePath, cells, format);
+                    SerializationFileUtility.WriteFile(filePath, cells, format, ensureDirectory: false);
                 });
 
                 tasks.Add(task);

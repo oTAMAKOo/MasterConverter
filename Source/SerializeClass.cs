@@ -24,6 +24,9 @@ namespace MasterConverter
 
         // プロパティ情報.
         private Property[] properties = null;
+
+        // フィールド名からPropertyへの逆引き辞書.
+        private Dictionary<string, Property> propertyLookup = null;
         
         //----- property -----
 
@@ -77,6 +80,10 @@ namespace MasterConverter
                 }
 
                 properties = list.ToArray();
+
+                propertyLookup = properties
+                    .Where(x => !string.IsNullOrEmpty(x.fieldName))
+                    .ToDictionary(x => x.fieldName, x => x);
             }
 
             var dictionary = new Dictionary<string, Type>();
@@ -100,9 +107,7 @@ namespace MasterConverter
 
             foreach (var item in fieldValues)
             {
-                var property = properties.FirstOrDefault(x => x.fieldName == item.Key);
-
-                if (property == null) { continue; }
+                if (!propertyLookup.TryGetValue(item.Key, out var property)) { continue; }
 
                 if (property.type == null) { continue; }
 
@@ -110,7 +115,7 @@ namespace MasterConverter
                 {
                     var value = ParseValue(item.Value, property.type);
 
-                    TypeGenerator.SetProperty(instance, property.fieldName, value, property.type);
+                    Class.SetCachedProperty(instance, property.fieldName, value);
                 }
                 catch (Exception e)
                 {

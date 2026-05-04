@@ -14,9 +14,19 @@ namespace MasterConverter
 
         //----- field -----
 
-        private static JsonSerializerSettings jsonSerializerSettings = null;
+        private static readonly Lazy<JsonSerializerSettings> jsonSerializerSettings = new Lazy<JsonSerializerSettings>(() =>
+            new JsonSerializerSettings()
+            {
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Ignore,
+            });
 
-        private static IDeserializer yamlDeserializer = null;
+        private static readonly Lazy<IDeserializer> yamlDeserializer = new Lazy<IDeserializer>(() =>
+        {
+            var builder = new DeserializerBuilder();
+            builder.IgnoreUnmatchedProperties();
+            return builder.Build();
+        });
 
         //----- property -----
 
@@ -103,127 +113,103 @@ namespace MasterConverter
                 .OrderBy(x => x, new NaturalComparer())
                 .ToArray();
 
+            var count = recordFiles.Length;
+
+            if (count == 0) { return new RecordData[0]; }
+
+            // 事前確保配列（インデックス書き込みでロック不要）.
+            var fileTexts = new string[count];
+            var optionDataArray = new ExcelCell[count][];
+            var recordArray = new RecordData[count];
+
             // レコードファイル読み込み.
 
-            var recordData = new Dictionary<string, string>();
+            var readTasks = new Task[count];
 
-            if (recordFiles.Any())
+            for (var i = 0; i < count; i++)
             {
-                var tasks = new List<Task>();
+                var idx = i;
 
-                foreach (var recordFile in recordFiles)
+                readTasks[idx] = Task.Run(async () =>
                 {
-                    var task = Task.Run(async () =>
+                    using (var file = new FileStream(recordFiles[idx], FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
-                        using (var file = new FileStream(recordFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        using (var reader = new StreamReader(file, Encoding.UTF8))
                         {
-                            using (var reader = new StreamReader(file, Encoding.UTF8))
-                            {
-                                var text = await reader.ReadToEndAsync();
-
-                                lock (recordData)
-                                {
-                                    recordData.Add(recordFile, text);
-                                }
-                            }
+                            fileTexts[idx] = await reader.ReadToEndAsync();
                         }
-                    });
-
-                    tasks.Add(task);
-                }
-
-                await Task.WhenAll(tasks);
+                    }
+                });
             }
+
+            await Task.WhenAll(readTasks);
 
             // オプションデータ読み込み.
 
-            var optionDataDictionary = new Dictionary<string, ExcelCell[]>();
+            var optionTasks = new Task[count];
 
-            if (recordData.Any())
+            for (var i = 0; i < count; i++)
             {
-                var tasks = new List<Task>();
+                var idx = i;
+                var optionFilePath = Path.ChangeExtension(recordFiles[idx], Constants.CellOptionFileExtension);
 
-                foreach (var item in recordData)
+                if (File.Exists(optionFilePath))
                 {
-                    var recordFilePath = item.Key;
-
-                    var optionFilePath = Path.ChangeExtension(recordFilePath, Constants.CellOptionFileExtension);
-
-                    if (!File.Exists(optionFilePath)) { continue; }
-
-                    var task = Task.Run(() =>
+                    optionTasks[idx] = Task.Run(() =>
                     {
-                        var optionData = SerializationFileUtility.LoadFile<ExcelCell[]>(optionFilePath, format);
-
-                        lock (optionDataDictionary)
-                        {
-                            if (!optionDataDictionary.ContainsKey(optionFilePath))
-                            {
-                                optionDataDictionary.Add(optionFilePath, new ExcelCell[0]);
-                            }
-
-                            optionDataDictionary[optionFilePath] = optionData;
-                        }
+                        optionDataArray[idx] = SerializationFileUtility.LoadFile<ExcelCell[]>(optionFilePath, format);
                     });
-
-                    tasks.Add(task);
                 }
-
-                await Task.WhenAll(tasks);
+                else
+                {
+                    optionTasks[idx] = Task.CompletedTask;
+                }
             }
+
+            await Task.WhenAll(optionTasks);
 
             // レコードクラスに変換.
 
-            var recordList = new List<RecordData>();
+            var deserializeTasks = new Task[count];
 
-            if (recordData.Any())
+            for (var i = 0; i < count; i++)
             {
-                var tasks = new List<Task>();
-                
-                foreach (var item in recordData)
+                var idx = i;
+
+                deserializeTasks[idx] = Task.Run(() =>
                 {
-                    var task = Task.Run(() =>
+                    var instance = Deserialize(typeGenerator.Type, fileTexts[idx], format);
+
+                    var recordValues = new List<RecordValue>();
+
+                    foreach (var property in typeGenerator.Properties)
                     {
-                        var instance = Deserialize(typeGenerator.Type, item.Value, format);
+                        var value = typeGenerator.GetCachedProperty(instance, property.Key);
 
-                        var recordValues = new List<RecordValue>();
-
-                        foreach (var property in typeGenerator.Properties)
+                        var recordValue = new RecordValue()
                         {
-                            var value = TypeGenerator.GetProperty(instance, property.Key, property.Value);
-
-                            var recordValue = new RecordValue()
-                            {
-                                fieldName = property.Key,
-                                value = value,
-                            };
-
-                            recordValues.Add(recordValue);
-                        }
-
-                        var values = recordValues.ToArray();
-
-                        var record = new RecordData()
-                        {
-                            recordName = GetRecordName(string.Empty, values),
-                            values = values,
-                            cells = optionDataDictionary.GetValueOrDefault(item.Key),
+                            fieldName = property.Key,
+                            value = value,
                         };
 
-                        lock (recordList)
-                        {
-                            recordList.Add(record);
-                        }
-                    });
+                        recordValues.Add(recordValue);
+                    }
 
-                    tasks.Add(task);
-                }
+                    var values = recordValues.ToArray();
 
-                await Task.WhenAll(tasks);
+                    recordArray[idx] = new RecordData()
+                    {
+                        recordName = GetRecordName(string.Empty, values),
+                        values = values,
+                        cells = optionDataArray[idx],
+                    };
+                });
             }
 
+            await Task.WhenAll(deserializeTasks);
+
             // レコード名を重複しない形式に更新.
-            recordList = UpdateRecordNames(recordList);
+            var recordList = UpdateRecordNames(recordArray.ToList());
 
             return recordList.ToArray();
         }
@@ -236,31 +222,13 @@ namespace MasterConverter
             {
                 case SerializationFileUtility.Format.Json:
                 {
-                    if (jsonSerializerSettings == null)
-                    {
-                        jsonSerializerSettings = new JsonSerializerSettings()
-                        {
-                            Formatting = Formatting.Indented,
-                            NullValueHandling = NullValueHandling.Ignore,
-                        };
-                    }
-
-                    result = JsonConvert.DeserializeObject(text, type, jsonSerializerSettings);
+                    result = JsonConvert.DeserializeObject(text, type, jsonSerializerSettings.Value);
                 }
                     break;
 
                 case SerializationFileUtility.Format.Yaml:
                 {
-                    if (yamlDeserializer == null)
-                    {
-                        var builder = new DeserializerBuilder();
-
-                        builder.IgnoreUnmatchedProperties();
-
-                        yamlDeserializer = builder.Build();
-                    }
-
-                    result = yamlDeserializer.Deserialize(text, type);
+                    result = yamlDeserializer.Value.Deserialize(text, type);
                 }
                     break;
             }
@@ -385,30 +353,85 @@ namespace MasterConverter
 
         private static List<RecordData> UpdateRecordNames(List<RecordData> records)
         {
-            while (true)
-            {
-                var rename = false;
+            // 各レコードの有効フィールド値を事前計算.
+            var entries = new List<(RecordData record, string[] fieldValues)>(records.Count);
 
-                var groups = records.Where(x => !string.IsNullOrEmpty(x.recordName))
-                    .GroupBy(x => x.recordName)
+            foreach (var record in records)
+            {
+                if (string.IsNullOrEmpty(record.recordName))
+                {
+                    entries.Add((record, Array.Empty<string>()));
+                    continue;
+                }
+
+                var values = record.values
+                    .Where(v => v != null
+                        && !v.fieldName.StartsWith(Constants.IgnoreFieldPrefix)
+                        && !string.IsNullOrEmpty(v.value?.ToString()))
+                    .Select(v => v.value.ToString())
                     .ToArray();
 
-                foreach (var group in groups)
-                {
-                    if (1 < group.Count())
-                    {
-                        foreach (var item in group)
-                        {
-                            item.recordName = GetRecordName(item.recordName, item.values);
-                        }
+                entries.Add((record, values));
+            }
 
-                        rename = true;
+            var maxDepth = entries.Count > 0
+                ? entries.Max(x => x.fieldValues.Length)
+                : 0;
+
+            var currentNames = new string[entries.Count];
+            var finalized = new bool[entries.Count];
+
+            for (var depth = 1; depth <= maxDepth; depth++)
+            {
+                // 現在の深さまでの名前を構築.
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    if (finalized[i]) { continue; }
+
+                    var fields = entries[i].fieldValues;
+
+                    currentNames[i] = string.Join("_", fields.Take(depth));
+                }
+
+                // Dictionaryで重複カウント.
+                var nameCount = new Dictionary<string, int>();
+
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    if (finalized[i]) { continue; }
+
+                    nameCount.TryGetValue(currentNames[i], out var count);
+                    nameCount[currentNames[i]] = count + 1;
+                }
+
+                // 重複なしのレコードを確定.
+                var allResolved = true;
+
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    if (finalized[i]) { continue; }
+
+                    if (nameCount[currentNames[i]] == 1)
+                    {
+                        finalized[i] = true;
+                        entries[i].record.recordName = currentNames[i];
+                    }
+                    else
+                    {
+                        allResolved = false;
                     }
                 }
 
-                records = groups.SelectMany(x => x).ToList();
+                if (allResolved) { break; }
+            }
 
-                if (!rename) { break; }
+            // 最大深さでも解決できなかったレコード.
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (!finalized[i])
+                {
+                    entries[i].record.recordName = currentNames[i];
+                }
             }
 
             return records;

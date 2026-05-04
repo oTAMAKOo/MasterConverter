@@ -19,13 +19,42 @@ namespace Extensions
             Json,
         }
 
-        public static void WriteFile<T>(string filePath, T value, Format format)
-        {
-            var directory = Path.GetDirectoryName(filePath);
+        private static readonly Lazy<ISerializer> cachedYamlSerializer = new Lazy<ISerializer>(CreateYamlSerializer);
 
-            if (!Directory.Exists(directory))
+        private static readonly Lazy<IDeserializer> cachedYamlDeserializer = new Lazy<IDeserializer>(CreateYamlDeserializer);
+
+        private static ISerializer CreateYamlSerializer()
+        {
+            return new SerializerBuilder()
+                .WithTypeInspector(x => new SortedTypeInspector(x))
+                .WithEventEmitter(nextEmitter => new NullStringsAsEmptyEventEmitter(nextEmitter))
+                .Build();
+        }
+
+        private static IDeserializer CreateYamlDeserializer()
+        {
+            return new DeserializerBuilder()
+                .WithTypeInspector(x => new SortedTypeInspector(x))
+                .IgnoreUnmatchedProperties()
+                .Build();
+        }
+
+        private static readonly JsonSerializerSettings cachedJsonSettings = new JsonSerializerSettings()
+        {
+            Formatting = Formatting.Indented,
+            NullValueHandling = NullValueHandling.Ignore,
+        };
+
+        public static void WriteFile<T>(string filePath, T value, Format format, bool ensureDirectory = true)
+        {
+            if (ensureDirectory)
             {
-                Directory.CreateDirectory(directory);
+                var directory = Path.GetDirectoryName(filePath);
+
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
             }
 
             using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
@@ -38,11 +67,7 @@ namespace Extensions
                             {
                                 using (var jsonTextWriter = new JsonTextWriter(writer))
                                 {
-                                    var jsonSerializer = new JsonSerializer()
-                                    {
-                                        Formatting = Formatting.Indented,
-                                        NullValueHandling = NullValueHandling.Ignore,
-                                    };
+                                    var jsonSerializer = JsonSerializer.CreateDefault(cachedJsonSettings);
 
                                     jsonSerializer.Serialize(jsonTextWriter, value);
                                 }
@@ -51,12 +76,7 @@ namespace Extensions
 
                         case Format.Yaml:
                             {
-                                var yamlSerializer = new SerializerBuilder()
-                                    .WithTypeInspector(x => new SortedTypeInspector(x))
-                                    .WithEventEmitter(nextEmitter => new NullStringsAsEmptyEventEmitter(nextEmitter))
-                                    .Build();
-
-                                yamlSerializer.Serialize(writer, value);
+                                cachedYamlSerializer.Value.Serialize(writer, value);
                             }
                             break;
                     }
@@ -85,11 +105,7 @@ namespace Extensions
                             {
                                 using (var jsonTextReader = new JsonTextReader(reader))
                                 {
-                                    var jsonSerializer = new JsonSerializer()
-                                    {
-                                        Formatting = Formatting.Indented,
-                                        NullValueHandling = NullValueHandling.Ignore,
-                                    };
+                                    var jsonSerializer = JsonSerializer.CreateDefault(cachedJsonSettings);
 
                                     result = jsonSerializer.Deserialize(jsonTextReader, type);
                                 }
@@ -100,12 +116,7 @@ namespace Extensions
                             {
                                 var contents = reader.ReadToEnd();
 
-                                var yamlDeserializer = new DeserializerBuilder()
-                                    .WithTypeInspector(x => new SortedTypeInspector(x))
-                                    .IgnoreUnmatchedProperties()
-                                    .Build();
-
-                                result = yamlDeserializer.Deserialize(contents, type);
+                                result = cachedYamlDeserializer.Value.Deserialize(contents, type);
                             }
                             break;
                     }
